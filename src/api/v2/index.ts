@@ -19,14 +19,11 @@ import { persistPost } from "../../federation/post";
 import { type Variables, scopeRequired, tokenRequired } from "../../oauth";
 import { type Account, accounts, posts } from "../../schema";
 import search from "../../search";
-import { postMedia } from "../v1/media";
 import instance from "./instance";
 
 const app = new Hono<{ Variables: Variables }>();
 
 app.route("/instance", instance);
-
-app.post("/media", tokenRequired, scopeRequired(["write:media"]), postMedia);
 
 app.get(
   "/search",

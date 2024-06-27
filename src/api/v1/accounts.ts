@@ -1,4 +1,3 @@
-import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { isActor, lookupObject } from "@fedify/fedify";
 import * as vocab from "@fedify/fedify/vocab";
 import { zValidator } from "@hono/zod-validator";
@@ -27,7 +26,6 @@ import { getPostRelations, serializePost } from "../../entities/status";
 import { federation } from "../../federation";
 import { persistAccount } from "../../federation/account";
 import { type Variables, scopeRequired, tokenRequired } from "../../oauth";
-import { S3_BUCKET, S3_URL_BASE, s3 } from "../../s3";
 import {
   type NewFollow,
   accountOwners,
@@ -98,27 +96,27 @@ app.patch(
     }
     const account = owner.account;
     const form = c.req.valid("form");
-    let avatarUrl = undefined;
+    const avatarUrl = undefined;
     if (form.avatar instanceof File) {
-      await s3.send(
-        new PutObjectCommand({
-          Bucket: S3_BUCKET,
-          Key: `avatars/${account.id}`,
-          Body: new Uint8Array(await form.avatar.arrayBuffer()),
-        }),
-      );
-      avatarUrl = new URL(`avatars/${account.id}`, S3_URL_BASE).href;
+      // await s3.send(
+      //   new PutObjectCommand({
+      //     Bucket: S3_BUCKET,
+      //     Key: `avatars/${account.id}`,
+      //     Body: new Uint8Array(await form.avatar.arrayBuffer()),
+      //   }),
+      // );
+      // avatarUrl = new URL(`avatars/${account.id}`, S3_URL_BASE).href;
     }
-    let coverUrl = undefined;
+    const coverUrl = undefined;
     if (form.header instanceof File) {
-      await s3.send(
-        new PutObjectCommand({
-          Bucket: S3_BUCKET,
-          Key: `covers/${account.id}`,
-          Body: new Uint8Array(await form.header.arrayBuffer()),
-        }),
-      );
-      coverUrl = new URL(`covers/${account.id}`, S3_URL_BASE).href;
+      // await s3.send(
+      //   new PutObjectCommand({
+      //     Bucket: S3_BUCKET,
+      //     Key: `covers/${account.id}`,
+      //     Body: new Uint8Array(await form.header.arrayBuffer()),
+      //   }),
+      // );
+      // coverUrl = new URL(`covers/${account.id}`, S3_URL_BASE).href;
     }
     const fedCtx = federation.createContext(c.req.raw, undefined);
     const fmtOpts = {
