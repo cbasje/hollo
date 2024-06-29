@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@astrojs/check": "^0.7.0",
-    "@fedify/fedify": "0.11.0-dev.245",
+    "@fedify/fedify": "^0.11.0",
     "@fedify/markdown-it-hashtag": "0.2.0",
     "@fedify/markdown-it-mention": "^0.1.1",
     "@fedify/redis": "^0.1.1",
