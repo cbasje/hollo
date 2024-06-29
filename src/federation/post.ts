@@ -58,13 +58,17 @@ export async function persistPost(
   options: {
     contextLoader?: DocumentLoader;
     documentLoader?: DocumentLoader;
+    account?: Account;
   } = {},
 ): Promise<schema.Post | null> {
   if (object.id == null) return null;
   const actor = await object.getAttribution();
   logger.debug("Fetched actor: {actor}", { actor });
   if (!isActor(actor)) return null;
-  const account = await persistAccount(db, search, actor, options);
+  const account =
+    options?.account != null && options.account.iri === actor.id?.href
+      ? options.account
+      : await persistAccount(db, search, actor, options);
   logger.debug("Persisted account: {account}", { account });
   if (account == null) return null;
   let replyTargetId: string | null = null;
@@ -193,10 +197,25 @@ export async function persistPost(
     const mediaType =
       response.headers.get("Content-Type") ?? attachment.mediaType;
     if (mediaType == null) continue;
-    // const image = sharp(await response.arrayBuffer());
-    // const metadata = await image.metadata();
     // const id = uuidv7();
-    // const thumbnail = await uploadThumbnail(id, image);
+    // let thumbnail: Thumbnail;
+    // let metadata: { width?: number; height?: number };
+    // try {
+    //   const image = sharp(await response.arrayBuffer());
+    //   metadata = await image.metadata();
+    //   thumbnail = await uploadThumbnail(id, image);
+    // } catch (_) {
+    //   metadata = {
+    //     width: attachment.width ?? 512,
+    //     height: attachment.height ?? 512,
+    //   };
+    //   thumbnail = {
+    //     thumbnailUrl: url,
+    //     thumbnailType: mediaType,
+    //     thumbnailWidth: metadata.width!,
+    //     thumbnailHeight: metadata.height!,
+    //   };
+    // }
     // await db.insert(media).values({
     //   id,
     //   postId: post.id,
@@ -205,7 +224,7 @@ export async function persistPost(
     //   description: attachment.name?.toString(),
     //   width: attachment.width ?? metadata.width!,
     //   height: attachment.height ?? metadata.height!,
-    //   // ...thumbnail,
+    //   ...thumbnail,
     // } satisfies NewMedium);
   }
   post = await db.query.posts.findFirst({
