@@ -1,0 +1,100 @@
+---
+import type { Account, Medium as DbMedium, Post as DbPost } from "../schema";
+import PostContent from "./PostContent.astro";
+
+interface Props {
+    post: DbPost & {
+        account: Account;
+        media: DbMedium[];
+        sharing:
+            | (DbPost & {
+                  account: Account;
+                  media: DbMedium[];
+                  replyTarget: (DbPost & { account: Account }) | null;
+              })
+            | null;
+        replyTarget: (DbPost & { account: Account }) | null;
+    };
+    pinned?: boolean;
+}
+
+let { post, pinned } = Astro.props;
+
+if (post.sharing != null) {
+    post = { ...post.sharing, sharing: null };
+}
+
+const account = post.account;
+---
+
+<article style={pinned ? "border: 1px solid gray;" : ""}>
+    <header>
+        <hgroup>
+            {
+                account.avatarUrl && (
+                    <img
+                        src={account.avatarUrl}
+                        alt={`${account.name}'s avatar`}
+                        width={48}
+                        height={48}
+                        style="float: left; margin-right: .5em;"
+                    />
+                )
+            }
+            <h5>
+                <a href={account.url ?? account.iri}>{account.name}</a>
+            </h5>
+            <p>
+                <small style="user-select: all;">{account.handle}</small>
+                {
+                    post.replyTarget != null && (
+                        <>
+                            {" "}
+                            &middot;{" "}
+                            <small>
+                                Reply to{" "}
+                                <a
+                                    href={
+                                        post.replyTarget.url ??
+                                        post.replyTarget.iri
+                                    }
+                                >
+                                    {post.replyTarget.account.name}'s post
+                                </a>
+                            </small>{" "}
+                        </>
+                    )
+                }
+            </p>
+        </hgroup>
+    </header>
+    {
+        post.summaryHtml == null || post.summaryHtml.trim() === "" ? (
+            <PostContent post={post} />
+        ) : (
+            <details>
+                <summary
+                    set:html={post.summaryHtml}
+                    lang={post.language ?? undefined}
+                />
+                <PostContent post={post} />
+            </details>
+        )
+    }
+    <footer>
+        <p>
+            <a href={post.url ?? post.iri}>
+                <small>
+                    <time
+                        datetime={(
+                            post.published ?? post.updated
+                        ).toISOString()}
+                    >
+                        {(post.published ?? post.updated).toLocaleString()}
+                    </time>
+                </small>
+            </a>
+            {pinned ? <small> &middot; Pinned</small> : ""}
+        </p>
+    </footer>
+</article>

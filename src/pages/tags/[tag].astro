@@ -1,0 +1,45 @@
+---
+import { and, desc, eq, sql } from "drizzle-orm";
+import Post from "../../components/Post.astro";
+import { db } from "../../db";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { accountOwners, posts } from "../../schema";
+
+const { tag } = Astro.params;
+
+const handle = Astro.url.searchParams.get("handle");
+const hashtag = `#${tag?.toLowerCase()}`;
+const postList = await db.query.posts.findMany({
+    where: and(
+        sql`${posts.tags} ? ${hashtag}`,
+        eq(posts.visibility, "public"),
+        handle == null
+            ? undefined
+            : eq(
+                  posts.accountId,
+                  db
+                      .select({ id: accountOwners.id })
+                      .from(accountOwners)
+                      .where(eq(accountOwners.handle, handle))
+              )
+    ),
+    orderBy: desc(posts.id),
+    with: {
+        account: true,
+        media: true,
+        sharing: {
+            with: {
+                account: true,
+                media: true,
+                replyTarget: { with: { account: true } },
+            },
+        },
+        replyTarget: { with: { account: true } },
+    },
+});
+---
+
+<BaseLayout title={`#${tag}`}>
+    <h1>#{tag}</h1>
+    {postList.map((post) => <Post post={post} />)}
+</BaseLayout>

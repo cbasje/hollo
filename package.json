@@ -4,13 +4,16 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "prod": "bun run migrate && bun run src/index.tsx",
-    "dev": "bun run migrate && bun run --hot src/index.tsx",
+    "prod": "bun run db:migrate && bun run src/index.ts",
+    "dev": "bun run db:migrate && bun run --hot src/index.ts",
     "check": "bunx tsc && bunx biome check .",
-    "migrate": "bunx drizzle-kit migrate",
-    "migrate:generate": "bunx drizzle-kit generate"
+    "db:migrate": "bunx drizzle-kit migrate",
+    "db:generate": "bunx drizzle-kit generate",
+    "astro:build": "astro check && astro build",
+    "astro": "astro"
   },
   "dependencies": {
+    "@astrojs/check": "^0.7.0",
     "@fedify/fedify": "0.11.0-dev.245",
     "@fedify/markdown-it-hashtag": "0.2.0",
     "@fedify/markdown-it-mention": "^0.1.1",
@@ -21,6 +24,7 @@
     "@std/encoding": "npm:@jsr/std__encoding",
     "@std/semver": "npm:@jsr/std__semver",
     "@stdext/crypto": "npm:@jsr/stdext__crypto",
+    "astro": "^4.11.3",
     "cheerio": "^1.0.0-rc.12",
     "drizzle-orm": "^0.30.10",
     "hono": "^4.3.4",

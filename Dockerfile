@@ -13,6 +13,8 @@ COPY bun.lockb package.json /app/
 WORKDIR /app/
 RUN bun install --frozen-lockfile --no-cache
 
+RUN bun run astro:build
+
 COPY . /app/
 
 ARG VERSION
