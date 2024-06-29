@@ -25,15 +25,14 @@ import {
 import type { PgDatabase } from "drizzle-orm/pg-core";
 import type { PostgresJsQueryResultHKT } from "drizzle-orm/postgres-js";
 import type MeiliSearch from "meilisearch";
-import sharp from "sharp";
 import { uuidv7 } from "uuidv7-js";
 import { fetchPreviewCard } from "../previewcard";
+import type * as schema from "../schema";
 import {
   type Account,
   type AccountOwner,
   type Medium,
   type Mention,
-  type NewMedium,
   type NewPost,
   type Post,
   accountOwners,
@@ -42,7 +41,6 @@ import {
   mentions,
   posts,
 } from "../schema";
-import type * as schema from "../schema";
 import { extractPreviewLink } from "../text";
 import { persistAccount, persistAccountByIri } from "./account";
 import { toDate, toTemporalInstant } from "./date";
@@ -195,9 +193,9 @@ export async function persistPost(
     const mediaType =
       response.headers.get("Content-Type") ?? attachment.mediaType;
     if (mediaType == null) continue;
-    const image = sharp(await response.arrayBuffer());
-    const metadata = await image.metadata();
-    const id = uuidv7();
+    // const image = sharp(await response.arrayBuffer());
+    // const metadata = await image.metadata();
+    // const id = uuidv7();
     // const thumbnail = await uploadThumbnail(id, image);
     // await db.insert(media).values({
     //   id,
