@@ -13,9 +13,9 @@ COPY bun.lockb package.json /app/
 WORKDIR /app/
 RUN bun install --frozen-lockfile --no-cache
 
-RUN bun run astro:build
-
 COPY . /app/
+
+RUN bun run astro:build
 
 ARG VERSION
 LABEL org.opencontainers.image.version ${VERSION}
