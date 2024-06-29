@@ -56,18 +56,10 @@ function createAppHandler(app: App): MiddlewareHandler {
       );
       ctx.res = response;
     } else if (next) {
-      // If the request does not match a route in the astro app render the 404 page
-      const response = await app.render(request, {
-        routeData,
-        locals: {
-          login,
-          token,
-        },
-      });
-      ctx.res = response;
+      // If the request does not match a route in the Astro app, call Hono next()
       await next();
     } else {
-      return new Response("Not Found", { status: 404 });
+      return new Response("Page not found", { status: 404 });
     }
   };
 }
