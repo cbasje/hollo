@@ -2,7 +2,7 @@ import { federation } from "@fedify/fedify/x/hono";
 import { Hono } from "hono";
 import { serveStatic } from "hono/bun";
 import { behindProxy } from "x-forwarded-fetch";
-import { handler as astroHandler } from "../dist/server/entry.mjs";
+// import { handler as astroHandler } from "../dist/server/entry.mjs";
 import accounts from "./accounts";
 import api from "./api";
 import fedi from "./federation";
@@ -14,7 +14,11 @@ import oauth from "./oauth";
 const app = new Hono();
 
 app.use("/*", serveStatic({ root: "../dist/client/" }));
-app.use(astroHandler);
+// app.use(astroHandler);
+try {
+  const { handler: astroHandler } = await require("../dist/server/entry.mjs");
+  app.use(astroHandler);
+} catch (error) {}
 
 app.use(federation(fedi, (_) => undefined));
 
