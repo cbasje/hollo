@@ -13,14 +13,14 @@ import oauth from "./oauth";
 
 const app = new Hono();
 
+app.use(federation(fedi, (_) => undefined));
+
 app.use("/*", serveStatic({ root: "../dist/client/" }));
 // app.use(astroHandler);
 try {
   const { handler: astroHandler } = await require("../dist/server/entry.mjs");
   app.use(astroHandler);
 } catch (error) {}
-
-app.use(federation(fedi, (_) => undefined));
 
 app.route("/login", login);
 app.route("/accounts", accounts);
