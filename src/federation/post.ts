@@ -25,6 +25,8 @@ import {
 import type { PgDatabase } from "drizzle-orm/pg-core";
 import type { PostgresJsQueryResultHKT } from "drizzle-orm/postgres-js";
 import type MeiliSearch from "meilisearch";
+// @ts-ignore: No type definitions available
+import { isSSRFSafeURL } from "ssrfcheck";
 import { uuidv7 } from "uuidv7-js";
 import { fetchPreviewCard } from "../previewcard";
 import type * as schema from "../schema";
@@ -192,7 +194,7 @@ export async function persistPost(
       attachment.url instanceof Link
         ? attachment.url.href?.href
         : attachment.url?.href;
-    if (url == null) continue;
+    if (url == null || !isSSRFSafeURL(url)) continue;
     const response = await fetch(url);
     const mediaType =
       response.headers.get("Content-Type") ?? attachment.mediaType;
