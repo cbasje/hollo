@@ -1,0 +1,18 @@
+---
+import type { Medium as DbMedium } from "../schema";
+
+interface Props {
+    medium: DbMedium;
+}
+
+const { medium } = Astro.props;
+---
+
+<a href={medium.url}>
+    <img
+        src={medium.thumbnailUrl}
+        alt={medium.description ?? ""}
+        width={medium.thumbnailWidth}
+        height={medium.thumbnailHeight}
+    />
+</a>

@@ -1,0 +1,51 @@
+---
+import db from "../db";
+import BaseLayout from "../layouts/BaseLayout.astro";
+
+const credential = await db.query.credentials.findFirst();
+if (credential == null) return Astro.redirect("/setup");
+
+const owners = await db.query.accountOwners.findMany({
+    with: { account: true },
+});
+if (owners.length < 1) return Astro.redirect("/accounts");
+const host = new URL(Astro.url).host;
+---
+
+<BaseLayout title={host}>
+    <hgroup>
+        <h1>{host}</h1>
+        <p>This Hollo instance has the below accounts.</p>
+    </hgroup>
+    {
+        owners.map((owner) => (
+            <article>
+                <hgroup>
+                    {owner.account.avatarUrl && (
+                        <a href={owner.account.url ?? owner.account.iri}>
+                            <img
+                                src={owner.account.avatarUrl}
+                                alt={`${owner.account.name}'s avatar`}
+                                width={72}
+                                height={72}
+                                style="float: left; margin-right: 1em;"
+                            />
+                        </a>
+                    )}
+                    <h3>
+                        <a href={owner.account.url ?? owner.account.iri}>
+                            {owner.account.name}
+                        </a>
+                    </h3>
+                    <p style="user-select: all;">{owner.account.handle}</p>
+                </hgroup>
+                <div set:html={owner.account.bioHtml ?? ""} />
+            </article>
+        ))
+    }
+    <div>
+        <a role="button" href="/accounts">
+            Manage accounts (signing in required)
+        </a>
+    </div>
+</BaseLayout>

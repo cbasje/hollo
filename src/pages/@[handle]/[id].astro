@@ -1,0 +1,72 @@
+---
+import { and, eq, or } from "drizzle-orm";
+import Post from "../../components/Post.astro";
+import db from "../../db";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { accountOwners, posts } from "../../schema";
+
+let { id: postId, handle } = Astro.params;
+if (handle == null || postId == null)
+    return new Response(undefined, { status: 404 });
+
+if (handle.startsWith("@")) handle = handle.substring(1);
+
+const post = await db.query.posts.findFirst({
+    where: and(
+        eq(
+            posts.accountId,
+            db
+                .select({ id: accountOwners.id })
+                .from(accountOwners)
+                .where(eq(accountOwners.handle, handle))
+        ),
+        eq(posts.id, postId),
+        or(eq(posts.visibility, "public"), eq(posts.visibility, "unlisted"))
+    ),
+    with: {
+        account: true,
+        media: true,
+        sharing: {
+            with: {
+                account: true,
+                media: true,
+                replyTarget: { with: { account: true } },
+            },
+        },
+        replyTarget: { with: { account: true } },
+        replies: {
+            with: {
+                account: true,
+                media: true,
+                sharing: {
+                    with: {
+                        account: true,
+                        media: true,
+                        replyTarget: { with: { account: true } },
+                    },
+                },
+                replyTarget: { with: { account: true } },
+            },
+        },
+    },
+});
+
+if (post == null) return new Response(undefined, { status: 404 });
+
+const summary =
+    post.summary ??
+    ((post.content ?? "").length > 30
+        ? `${(post.content ?? "").substring(0, 30)}…`
+        : post.content ?? "");
+---
+
+<BaseLayout
+    title={`${summary} — ${post.account.name}`}
+    shortTitle={summary}
+    description={post.summary ?? post.content}
+    imageUrl={post.account.avatarUrl}
+    url={post.url ?? post.iri}
+>
+    <Post post={post} />
+    {post.replies.map((reply) => <Post post={reply} />)}
+</BaseLayout>

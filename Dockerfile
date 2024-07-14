@@ -15,6 +15,8 @@ RUN bun install --frozen-lockfile --no-cache
 
 COPY . /app/
 
+RUN bun run astro:build
+
 ARG VERSION
 LABEL org.opencontainers.image.version ${VERSION}
 RUN \

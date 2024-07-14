@@ -1,0 +1,32 @@
+---
+import type { Medium as DbMedium, Post as DbPost } from "../schema";
+import Medium from "./Medium.astro";
+
+interface Props {
+    readonly post: DbPost & { media: DbMedium[] };
+}
+
+const { post } = Astro.props;
+---
+
+{
+    post.contentHtml && (
+        <div set:html={post.contentHtml} lang={post.language ?? undefined} />
+    )
+}
+{
+    post.media.length > 0 && (
+        <div>
+            {post.media.map((medium) =>
+                medium.description && medium.description.trim() !== "" ? (
+                    <figure>
+                        <Medium medium={medium} />
+                        <figcaption>{medium.description}</figcaption>
+                    </figure>
+                ) : (
+                    <Medium medium={medium} />
+                )
+            )}
+        </div>
+    )
+}
