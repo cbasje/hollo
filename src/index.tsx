@@ -1,27 +1,28 @@
-import { federation } from "@fedify/fedify/x/hono";
+import { federation as honoFedifyMiddleware } from "@fedify/fedify/x/hono";
 import { Hono } from "hono";
 import { serveStatic } from "hono/bun";
 import { behindProxy } from "x-forwarded-fetch";
 import accounts from "./accounts";
 import api from "./api";
-import fedi from "./federation";
+import federation from "./federation";
 import image from "./image";
 import "./logging";
+// @ts-expect-error: to prevent `astro check` complaining before build
+import astroHandler from "../dist/server/entry.mjs";
 import login from "./login";
 import oauth from "./oauth";
 import setup from "./setup";
 
 const app = new Hono();
 
-app.use(federation(fedi, (_) => undefined));
+// Add Fedify setup
+app.use(honoFedifyMiddleware(federation, (_) => undefined));
 
+// Add pre-built Astro routes
 app.use("/*", serveStatic({ root: "../dist/client/" }));
-// app.use(astroHandler);
-try {
-  const { handler: astroHandler } = await require("../dist/server/entry.mjs");
-  app.use(astroHandler);
-} catch (error) {}
+app.use(astroHandler);
 
+// Add rest routes
 app.route("/setup", setup);
 app.route("/login", login);
 app.route("/accounts", accounts);
