@@ -7,8 +7,6 @@ import api from "./api";
 import federation from "./federation";
 import image from "./image";
 import "./logging";
-// @ts-expect-error: to prevent `astro check` complaining before build
-import astroHandler from "../dist/server/entry.mjs";
 import login from "./login";
 import oauth from "./oauth";
 import setup from "./setup";
@@ -20,7 +18,11 @@ app.use(honoFedifyMiddleware(federation, (_) => undefined));
 
 // Add pre-built Astro routes
 app.use("/*", serveStatic({ root: "../dist/client/" }));
-app.use(astroHandler);
+try {
+  // To prevent `astro check` complaining before build
+  const { handler: astroHandler } = await require("../dist/server/entry.mjs");
+  app.use(astroHandler);
+} catch (error) {}
 
 // Add rest routes
 app.route("/setup", setup);
