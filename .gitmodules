@@ -1,4 +1,4 @@
 [submodule "src/hunter"]
 	path = src/hunter
-	url = ../porpoise-hunter.git
+	url = https://github.com/cbasje/porpoise-hunter.git
 	branch = hollo
