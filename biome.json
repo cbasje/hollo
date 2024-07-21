@@ -17,6 +17,9 @@
       "correctness": {
         "useJsxKeyInIterable": "off"
       },
+      "suspicious": {
+        "noConsoleLog": "warn"
+      },
       "style": {
         "noNonNullAssertion": "off"
       }

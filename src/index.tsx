@@ -5,11 +5,24 @@ import { behindProxy } from "x-forwarded-fetch";
 import accounts from "./accounts";
 import api from "./api";
 import federation from "./federation";
+import hunter from "./hunter";
 import image from "./image";
 import "./logging";
 import login from "./login";
 import oauth from "./oauth";
 import setup from "./setup";
+
+export type EnvVariables = {
+  PUBLIC_MAP_API_KEY: string;
+  GEOCODING_API_KEY: string;
+  WEATHER_API_KEY: string;
+
+  INCLUDED_SERIES?: string;
+
+  F1A_API_KEY: string;
+  F2_API_KEY: string;
+  F3_API_KEY: string;
+};
 
 const app = new Hono();
 
@@ -23,6 +36,9 @@ try {
   const { handler: astroHandler } = await require("../dist/server/entry.mjs");
   app.use(astroHandler);
 } catch (error) {}
+
+// Add hunter
+app.route("/hunter", hunter);
 
 // Add rest routes
 app.route("/setup", setup);

@@ -1,0 +1,4 @@
+[submodule "src/hunter"]
+	path = src/hunter
+	url = https://x-access-token:${GITHUB_TOKEN}@github.com/cbasje/porpoise-hunter.git
+	branch = hollo

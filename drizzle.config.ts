@@ -5,7 +5,7 @@ const databaseUrl = process.env["DATABASE_URL"];
 if (databaseUrl == null) throw new Error("DATABASE_URL must be defined");
 
 export default {
-  schema: "./src/schema.ts",
+  schema: ["./src/schema.ts", "./src/hunter/schema.ts"],
   out: "./drizzle",
   dialect: "postgresql",
   dbCredentials: {
