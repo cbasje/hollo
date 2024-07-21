@@ -13,10 +13,6 @@ COPY bun.lockb package.json /app/
 WORKDIR /app/
 RUN bun install --frozen-lockfile --no-cache
 
-ENV GITHUB_TOKEN ${GITHUB_TOKEN}
-
-RUN git submodule update --init --recursive
-
 COPY . /app/
 
 RUN bun run astro:build
