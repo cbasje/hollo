@@ -1,13 +1,13 @@
 ---
 import type {
-    Medium as DbMedium,
-    Poll as DbPoll,
-    Post as DbPost,
-    PollOption,
+  Medium as DbMedium,
+  Poll as DbPoll,
+  Post as DbPost,
+  PollOption,
 } from "../schema";
 
 interface Props {
-    poll: DbPoll & { options: PollOption[] };
+  poll: DbPoll & { options: PollOption[] };
 }
 
 const { poll } = Astro.props;

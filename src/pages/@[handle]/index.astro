@@ -13,61 +13,61 @@ if (handle == null) return new Response(undefined, { status: 404 });
 if (handle.startsWith("@")) handle = handle.substring(1);
 
 const owner = await db.query.accountOwners.findFirst({
-    where: eq(accountOwners.handle, handle),
-    with: { account: true },
+  where: eq(accountOwners.handle, handle),
+  with: { account: true },
 });
 if (owner == null) return new Response(undefined, { status: 404 });
 
 const postList = await db.query.posts.findMany({
-    where: and(
-        eq(posts.accountId, owner.id),
-        or(eq(posts.visibility, "public"), eq(posts.visibility, "unlisted"))
-    ),
-    orderBy: desc(posts.id),
-    with: {
+  where: and(
+    eq(posts.accountId, owner.id),
+    or(eq(posts.visibility, "public"), eq(posts.visibility, "unlisted")),
+  ),
+  orderBy: desc(posts.id),
+  with: {
+    account: true,
+    media: true,
+    poll: { with: { options: true } },
+    sharing: {
+      with: {
+        account: true,
+        media: true,
+        poll: { with: { options: true } },
+        replyTarget: { with: { account: true } },
+      },
+    },
+    replyTarget: { with: { account: true } },
+  },
+});
+const pinnedPostList = await db.query.pinnedPosts.findMany({
+  where: and(eq(pinnedPosts.accountId, owner.id)),
+  orderBy: desc(pinnedPosts.index),
+  with: {
+    post: {
+      with: {
         account: true,
         media: true,
         poll: { with: { options: true } },
         sharing: {
-            with: {
-                account: true,
-                media: true,
-                poll: { with: { options: true } },
-                replyTarget: { with: { account: true } },
-            },
+          with: {
+            account: true,
+            media: true,
+            poll: { with: { options: true } },
+            replyTarget: { with: { account: true } },
+          },
         },
         replyTarget: { with: { account: true } },
+      },
     },
-});
-const pinnedPostList = await db.query.pinnedPosts.findMany({
-    where: and(eq(pinnedPosts.accountId, owner.id)),
-    orderBy: desc(pinnedPosts.index),
-    with: {
-        post: {
-            with: {
-                account: true,
-                media: true,
-                poll: { with: { options: true } },
-                sharing: {
-                    with: {
-                        account: true,
-                        media: true,
-                        poll: { with: { options: true } },
-                        replyTarget: { with: { account: true } },
-                    },
-                },
-                replyTarget: { with: { account: true } },
-            },
-        },
-    },
+  },
 });
 const featuredTagList = await db.query.featuredTags.findMany({
-    where: eq(featuredTags.accountOwnerId, owner.id),
+  where: eq(featuredTags.accountOwnerId, owner.id),
 });
 
 const filteredPinnedPostList = pinnedPostList
-    .map((p) => p.post)
-    .filter((p) => p.visibility === "public" || p.visibility === "unlisted");
+  .map((p) => p.post)
+  .filter((p) => p.visibility === "public" || p.visibility === "unlisted");
 ---
 
 <BaseLayout

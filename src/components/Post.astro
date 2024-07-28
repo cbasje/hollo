@@ -1,35 +1,35 @@
 ---
 import type {
-    Account,
-    Medium as DbMedium,
-    Poll as DbPoll,
-    Post as DbPost,
-    PollOption,
+  Account,
+  Medium as DbMedium,
+  Poll as DbPoll,
+  Post as DbPost,
+  PollOption,
 } from "../schema";
 import PostContent from "./PostContent.astro";
 
 interface Props {
-    post: DbPost & {
-        account: Account;
-        media: DbMedium[];
-        poll: (DbPoll & { options: PollOption[] }) | null;
-        sharing:
-            | (DbPost & {
-                  account: Account;
-                  media: DbMedium[];
-                  poll: (DbPoll & { options: PollOption[] }) | null;
-                  replyTarget: (DbPost & { account: Account }) | null;
-              })
-            | null;
-        replyTarget: (DbPost & { account: Account }) | null;
-    };
-    pinned?: boolean;
+  post: DbPost & {
+    account: Account;
+    media: DbMedium[];
+    poll: (DbPoll & { options: PollOption[] }) | null;
+    sharing:
+      | (DbPost & {
+          account: Account;
+          media: DbMedium[];
+          poll: (DbPoll & { options: PollOption[] }) | null;
+          replyTarget: (DbPost & { account: Account }) | null;
+        })
+      | null;
+    replyTarget: (DbPost & { account: Account }) | null;
+  };
+  pinned?: boolean;
 }
 
 let { post, pinned } = Astro.props;
 
 if (post.sharing != null) {
-    post = { ...post.sharing, sharing: null };
+  post = { ...post.sharing, sharing: null };
 }
 
 const account = post.account;

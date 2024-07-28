@@ -4,6 +4,6 @@ import hono from "./adapter/index";
 
 // https://astro.build/config
 export default defineConfig({
-    output: "server",
-    adapter: hono(),
+  output: "server",
+  adapter: hono(),
 });

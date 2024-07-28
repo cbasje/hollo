@@ -7,61 +7,61 @@ import { accountOwners, posts } from "../../schema";
 
 let { id: postId, handle } = Astro.params;
 if (handle == null || postId == null)
-    return new Response(undefined, { status: 404 });
+  return new Response(undefined, { status: 404 });
 
 if (handle.startsWith("@")) handle = handle.substring(1);
 
 const post = await db.query.posts.findFirst({
-    where: and(
-        eq(
-            posts.accountId,
-            db
-                .select({ id: accountOwners.id })
-                .from(accountOwners)
-                .where(eq(accountOwners.handle, handle))
-        ),
-        eq(posts.id, postId),
-        or(eq(posts.visibility, "public"), eq(posts.visibility, "unlisted"))
+  where: and(
+    eq(
+      posts.accountId,
+      db
+        .select({ id: accountOwners.id })
+        .from(accountOwners)
+        .where(eq(accountOwners.handle, handle)),
     ),
-    with: {
+    eq(posts.id, postId),
+    or(eq(posts.visibility, "public"), eq(posts.visibility, "unlisted")),
+  ),
+  with: {
+    account: true,
+    media: true,
+    poll: { with: { options: true } },
+    sharing: {
+      with: {
+        account: true,
+        media: true,
+        poll: { with: { options: true } },
+        replyTarget: { with: { account: true } },
+      },
+    },
+    replyTarget: { with: { account: true } },
+    replies: {
+      with: {
         account: true,
         media: true,
         poll: { with: { options: true } },
         sharing: {
-            with: {
-                account: true,
-                media: true,
-                poll: { with: { options: true } },
-                replyTarget: { with: { account: true } },
-            },
+          with: {
+            account: true,
+            media: true,
+            poll: { with: { options: true } },
+            replyTarget: { with: { account: true } },
+          },
         },
         replyTarget: { with: { account: true } },
-        replies: {
-            with: {
-                account: true,
-                media: true,
-                poll: { with: { options: true } },
-                sharing: {
-                    with: {
-                        account: true,
-                        media: true,
-                        poll: { with: { options: true } },
-                        replyTarget: { with: { account: true } },
-                    },
-                },
-                replyTarget: { with: { account: true } },
-            },
-        },
+      },
     },
+  },
 });
 
 if (post == null) return new Response(undefined, { status: 404 });
 
 const summary =
-    post.summary ??
-    ((post.content ?? "").length > 30
-        ? `${(post.content ?? "").substring(0, 30)}…`
-        : post.content ?? "");
+  post.summary ??
+  ((post.content ?? "").length > 30
+    ? `${(post.content ?? "").substring(0, 30)}…`
+    : post.content ?? "");
 ---
 
 <BaseLayout

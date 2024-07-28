@@ -10,34 +10,34 @@ const { tag } = Astro.params;
 const handle = Astro.url.searchParams.get("handle");
 const hashtag = `#${tag?.toLowerCase()}`;
 const postList = await db.query.posts.findMany({
-    where: and(
-        sql`${posts.tags} ? ${hashtag}`,
-        eq(posts.visibility, "public"),
-        handle == null
-            ? undefined
-            : eq(
-                  posts.accountId,
-                  db
-                      .select({ id: accountOwners.id })
-                      .from(accountOwners)
-                      .where(eq(accountOwners.handle, handle))
-              )
-    ),
-    orderBy: desc(posts.id),
-    with: {
+  where: and(
+    sql`${posts.tags} ? ${hashtag}`,
+    eq(posts.visibility, "public"),
+    handle == null
+      ? undefined
+      : eq(
+          posts.accountId,
+          db
+            .select({ id: accountOwners.id })
+            .from(accountOwners)
+            .where(eq(accountOwners.handle, handle)),
+        ),
+  ),
+  orderBy: desc(posts.id),
+  with: {
+    account: true,
+    media: true,
+    poll: { with: { options: true } },
+    sharing: {
+      with: {
         account: true,
         media: true,
         poll: { with: { options: true } },
-        sharing: {
-            with: {
-                account: true,
-                media: true,
-                poll: { with: { options: true } },
-                replyTarget: { with: { account: true } },
-            },
-        },
         replyTarget: { with: { account: true } },
+      },
     },
+    replyTarget: { with: { account: true } },
+  },
 });
 ---
 
