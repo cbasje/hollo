@@ -1,21 +1,19 @@
 ---
+import AccountList from "../components/AccountList.astro";
 import WeekendCalendar from "../components/WeekendCalendar.astro";
 import db from "../db";
 import BaseLayout from "../layouts/BaseLayout.astro";
-
-const { host } = Astro.url;
 
 const credential = await db.query.credentials.findFirst();
 if (credential == null) return Astro.redirect("/setup");
 ---
 
-<BaseLayout title={host}>
-    <hgroup>
-        <h1>{host}</h1>
-        <p>This Hollo instance has the below accounts.</p>
-    </hgroup>
+<BaseLayout title="Porpoise">
+    <h1>Porpoise</h1>
 
     <WeekendCalendar />
+
+    <AccountList />
 
     <div>
         <a role="button" href="/accounts">

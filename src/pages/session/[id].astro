@@ -1,0 +1,62 @@
+---
+import { Icon } from "astro-icon/components";
+import { getSeriesIcon } from "../../db/rounds/utils";
+import * as sessions from "../../db/sessions/repository";
+import { getSessionTitle } from "../../db/sessions/utils";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { formatYourTime } from "../../utils/date";
+
+const { id } = Astro.params;
+
+if (!id) throw new Error("Session not found");
+
+const session = await sessions.getOne(id);
+---
+
+<BaseLayout
+    title={getSessionTitle(session.series, session.type, session.number)}
+>
+    {
+        session && (
+            <>
+                <button is="back-button">
+                    <Icon
+                        name={`fluent-emoji-high-contrast:${getSeriesIcon(session.series)}`}
+                    />
+
+                    <hgroup class="round-title">
+                        <h2 transition:name={`session-${session.id}`}>
+                            {session.series}
+
+                            {getSessionTitle(
+                                session.series,
+                                session.type,
+                                session.number
+                            )}
+                        </h2>
+
+                        <time datetime={session.start.toISOString()}>
+                            {formatYourTime(session.start, session.end)}
+                        </time>
+                    </hgroup>
+                </button>
+            </>
+        )
+    }
+</BaseLayout>
+
+<script>
+    class BackButton extends HTMLButtonElement {
+        constructor() {
+            super();
+
+            this.addEventListener("click", () => {
+                history.back();
+            });
+        }
+    }
+
+    customElements.define("back-button", BackButton, {
+        extends: "button",
+    });
+</script>

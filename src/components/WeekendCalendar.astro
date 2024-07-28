@@ -1,0 +1,73 @@
+---
+import { Icon } from "astro-icon/components";
+import { getSeriesIcon } from "../db/rounds/utils";
+import * as sessions from "../db/sessions/repository";
+import { getSessionTitle } from "../db/sessions/utils";
+import {
+  formatRangeWeekend,
+  formatRelWeekend,
+  formatYourTime,
+} from "../utils/date";
+
+const { searchParams } = Astro.url;
+
+const weekOffset = Number(searchParams.get("offset") || "0");
+const weekend = await sessions.getWeekend(weekOffset);
+---
+
+<hgroup class="weekend-title">
+    <h2>{formatRelWeekend(weekOffset)}</h2>
+    <time datetime={`${weekend?.at(0)?.year}-W${weekend?.at(0)?.weekNumber}`}>
+        {formatRangeWeekend(weekOffset)}
+    </time>
+</hgroup>
+
+{
+    weekend &&
+        weekend.map((session) => (
+            <button
+                is="navigate-button"
+                data-link={`/session/${session.id}`}
+                id={`session-${session.id}`}
+                style={`--color-hue: var(--${session.series}-hue)`}
+            >
+                <Icon
+                    name={`fluent-emoji-high-contrast:${getSeriesIcon(session.series)}`}
+                />
+
+                <hgroup class="round-title">
+                    <h2 transition:name={`session-${session.id}`}>
+                        {session.series}
+
+                        {getSessionTitle(
+                            session.series,
+                            session.type,
+                            session.number
+                        )}
+                    </h2>
+
+                    <time datetime={session.start.toISOString()}>
+                        {formatYourTime(session.start, session.end)}
+                    </time>
+                </hgroup>
+            </button>
+        ))
+}
+
+<script>
+    import { navigate } from "astro:transitions/client";
+
+    class NavigateButton extends HTMLButtonElement {
+        constructor() {
+            super();
+
+            this.addEventListener("click", () => {
+                if (this.dataset["link"]) navigate(this.dataset["link"]);
+            });
+        }
+    }
+
+    customElements.define("navigate-button", NavigateButton, {
+        extends: "button",
+    });
+</script>

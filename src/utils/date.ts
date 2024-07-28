@@ -1,3 +1,10 @@
+import {
+  getLocalTimeZone,
+  startOfWeek,
+  today,
+  type CalendarDate,
+} from "@internationalized/date";
+
 const minute = 60 * 1000;
 const hour = 60 * minute;
 const day = 24 * hour;
@@ -76,33 +83,24 @@ export const formatRangeWeekend = (weekendOffset: number | string) => {
       : weekendOffset;
   const [start, end] = getWeekendDatesFromOffset(weekendOffsetNumber);
 
+  const tz = getLocalTimeZone();
+
   const formatter = new Intl.DateTimeFormat(undefined, {
     dateStyle: "medium",
   });
-  return formatter.formatRange(start, end);
+  return formatter.formatRange(start.toDate(tz), end.toDate(tz));
 };
 
 export const getWeekendDatesFromOffset = (
   startOffset = 0,
   endOffset?: number,
-) => {
-  const now = new Date();
+): [CalendarDate, CalendarDate] => {
+  const weekStart = startOfWeek(today(getLocalTimeZone()), "en-GB"); // Start on Monday
 
-  const lastMonday = new Date();
-  const nextMonday = new Date();
-
-  const day = now.getDay();
-  const diff = (day + 7 - 1) % 7; // Calculate the difference from Monday (1) to the current day
-
-  lastMonday.setDate(now.getDate() - diff + 7 * startOffset);
-  nextMonday.setDate(
-    now.getDate() - diff + 7 * ((endOffset ?? startOffset) + 1),
-  );
-
-  lastMonday.setHours(12, 0, 0, 0);
-  nextMonday.setHours(12, 0, 0, 0);
-
-  return [lastMonday, nextMonday];
+  return [
+    weekStart.add({ weeks: startOffset }),
+    weekStart.add({ weeks: (endOffset ?? startOffset) + 1 }),
+  ];
 };
 
 export const getWeekendOffsetFromDates = (
