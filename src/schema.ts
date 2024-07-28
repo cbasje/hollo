@@ -124,6 +124,7 @@ export const accountOwnerRelations = relations(
     bookmarks: many(bookmarks),
     markers: many(markers),
     featuredTags: many(featuredTags),
+    lists: many(lists),
   }),
 );
 
@@ -253,7 +254,11 @@ export const accessTokenRelations = relations(accessTokens, ({ one }) => ({
   }),
 }));
 
-export const postTypeEnum = pgEnum("post_type", ["Article", "Note"]);
+export const postTypeEnum = pgEnum("post_type", [
+  "Article",
+  "Note",
+  "Question",
+]);
 
 export type PostType = (typeof postTypeEnum.enumValues)[number];
 
@@ -281,6 +286,9 @@ export const posts = pgTable(
     summary: text("summary"),
     contentHtml: text("content_html"),
     content: text("content"),
+    pollId: uuid("poll_id").references(() => polls.id, {
+      onDelete: "set null",
+    }),
     language: text("language"),
     tags: jsonb("tags").notNull().default({}).$type<Record<string, string>>(),
     sensitive: boolean("sensitive").notNull().default(false),
@@ -299,6 +307,7 @@ export const posts = pgTable(
       table.id,
       table.accountId,
     ),
+    uniquePollId: unique().on(table.pollId),
   }),
 );
 
@@ -332,6 +341,10 @@ export const postRelations = relations(posts, ({ one, many }) => ({
     relationName: "share",
   }),
   media: many(media),
+  poll: one(polls, {
+    fields: [posts.pollId],
+    references: [polls.id],
+  }),
   mentions: many(mentions),
   bookmarks: many(bookmarks),
   pin: one(pinnedPosts, {
@@ -362,6 +375,94 @@ export const mediumRelations = relations(media, ({ one }) => ({
   post: one(posts, {
     fields: [media.postId],
     references: [posts.id],
+  }),
+}));
+
+export const polls = pgTable("polls", {
+  id: uuid("id").primaryKey(),
+  multiple: boolean("multiple").notNull().default(false),
+  votersCount: bigint("voters_count", { mode: "number" }).notNull().default(0),
+  expires: timestamp("expires", { withTimezone: true }).notNull(),
+  created: timestamp("created", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type Poll = typeof polls.$inferSelect;
+export type NewPoll = typeof polls.$inferInsert;
+
+export const pollRelations = relations(polls, ({ one, many }) => ({
+  post: one(posts, {
+    fields: [polls.id],
+    references: [posts.pollId],
+  }),
+  options: many(pollOptions),
+  votes: many(pollVotes),
+}));
+
+export const pollOptions = pgTable(
+  "poll_options",
+  {
+    pollId: uuid("poll_id").references(() => polls.id, { onDelete: "cascade" }),
+    index: integer("index").notNull(),
+    title: text("title").notNull(),
+    votesCount: bigint("votes_count", { mode: "number" }).notNull().default(0),
+  },
+  (table) => ({
+    pk: primaryKey({ columns: [table.pollId, table.index] }),
+    uniquePollIdTitle: unique().on(table.pollId, table.title),
+  }),
+);
+
+export type PollOption = typeof pollOptions.$inferSelect;
+export type NewPollOption = typeof pollOptions.$inferInsert;
+
+export const pollOptionRelations = relations(pollOptions, ({ one, many }) => ({
+  poll: one(polls, {
+    fields: [pollOptions.pollId],
+    references: [polls.id],
+  }),
+  votes: many(pollVotes),
+}));
+
+export const pollVotes = pgTable(
+  "poll_votes",
+  {
+    pollId: uuid("poll_id")
+      .notNull()
+      .references(() => polls.id, { onDelete: "cascade" }),
+    optionIndex: integer("option_index").notNull(),
+    accountId: uuid("account_id")
+      .notNull()
+      .references(() => accounts.id, { onDelete: "cascade" }),
+    created: timestamp("created", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    pk: primaryKey({
+      columns: [table.pollId, table.optionIndex, table.accountId],
+    }),
+    pollIdOptionIndex: foreignKey({
+      columns: [table.pollId, table.optionIndex],
+      foreignColumns: [pollOptions.pollId, pollOptions.index],
+    }),
+  }),
+);
+
+export type PollVote = typeof pollVotes.$inferSelect;
+export type NewPollVote = typeof pollVotes.$inferInsert;
+
+export const pollVoteRelations = relations(pollVotes, ({ one }) => ({
+  poll: one(polls, {
+    fields: [pollVotes.pollId],
+    references: [polls.id],
+  }),
+  option: one(pollOptions, {
+    fields: [pollVotes.pollId, pollVotes.optionIndex],
+    references: [pollOptions.pollId, pollOptions.index],
+  }),
+  account: one(accounts, {
+    fields: [pollVotes.accountId],
+    references: [accounts.id],
   }),
 }));
 
@@ -547,5 +648,70 @@ export const featuredTagRelations = relations(featuredTags, ({ one }) => ({
   accountOwner: one(accountOwners, {
     fields: [featuredTags.accountOwnerId],
     references: [accountOwners.id],
+  }),
+}));
+
+export const listRepliesPolicyEnum = pgEnum("list_replies_policy", [
+  "followed",
+  "list",
+  "none",
+]);
+
+export type ListRepliesPolicy =
+  (typeof listRepliesPolicyEnum.enumValues)[number];
+
+export const lists = pgTable("lists", {
+  id: uuid("id").primaryKey(),
+  accountOwnerId: uuid("account_owner_id")
+    .notNull()
+    .references(() => accountOwners.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  repliesPolicy: listRepliesPolicyEnum("replies_policy")
+    .notNull()
+    .default("list"),
+  exclusive: boolean("exclusive").notNull().default(false),
+  created: timestamp("created", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type List = typeof lists.$inferSelect;
+export type NewList = typeof lists.$inferInsert;
+
+export const listRelations = relations(lists, ({ one, many }) => ({
+  accountOwner: one(accountOwners, {
+    fields: [lists.accountOwnerId],
+    references: [accountOwners.id],
+  }),
+  members: many(listMembers),
+}));
+
+export const listMembers = pgTable(
+  "list_members",
+  {
+    listId: uuid("list_id")
+      .notNull()
+      .references(() => lists.id, { onDelete: "cascade" }),
+    accountId: uuid("account_id")
+      .notNull()
+      .references(() => accounts.id, { onDelete: "cascade" }),
+    created: timestamp("created", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    pk: primaryKey({ columns: [table.listId, table.accountId] }),
+  }),
+);
+
+export type ListMember = typeof listMembers.$inferSelect;
+export type NewListMember = typeof listMembers.$inferInsert;
+
+export const listMemberRelations = relations(listMembers, ({ one }) => ({
+  list: one(lists, {
+    fields: [listMembers.listId],
+    references: [lists.id],
+  }),
+  account: one(accounts, {
+    fields: [listMembers.accountId],
+    references: [accounts.id],
   }),
 }));

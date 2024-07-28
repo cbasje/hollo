@@ -24,14 +24,14 @@ Mastodon, Misskey, and so on.
 -   [x] Mentions
 -   [x] Hashtags
 -   [x] Media attachments
--   [ ] Polls
+-   [x] Polls
 -   [x] Likes (favorites)
 -   [x] Shares (reblogs)
 -   [x] Editing profile
 -   [x] Deleting account
 -   [x] Public timeline
 -   [x] Local timeline
--   [ ] Lists
+-   [x] Lists
 -   [ ] Trends
 -   [x] Search
 -   [x] Following/unfollowing accounts
