@@ -4,7 +4,7 @@ import db from "../db";
 const { host } = Astro.url;
 
 const owners = await db.query.accountOwners.findMany({
-    with: { account: true },
+  with: { account: true },
 });
 if (owners.length < 1) return Astro.redirect("/accounts");
 ---
