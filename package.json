@@ -28,6 +28,7 @@
     "@std/semver": "npm:@jsr/std__semver",
     "@stdext/crypto": "npm:@jsr/stdext__crypto",
     "astro": "^4.12.2",
+    "astro-icon": "^1.1.0",
     "cheerio": "^1.0.0-rc.12",
     "drizzle-orm": "^0.30.10",
     "hono": "^4.3.4",
@@ -47,6 +48,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^1.7.3",
+    "@iconify-json/fluent-emoji-high-contrast": "^1.1.15",
     "@types/bun": "latest",
     "@types/markdown-it": "^14.1.1",
     "drizzle-kit": "^0.21.0"
