@@ -30,7 +30,7 @@ const app = new Hono();
 app.use(honoFedifyMiddleware(federation, (_) => undefined));
 
 // Add pre-built Astro routes
-app.use("/*", serveStatic({ root: "../dist/client/" }));
+app.use("/*", serveStatic({ root: "./dist/client/" }));
 try {
   // To prevent `astro check` complaining before build
   const { handler: astroHandler } = await require("../dist/server/entry.mjs");
