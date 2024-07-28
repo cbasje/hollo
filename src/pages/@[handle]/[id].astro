@@ -26,10 +26,12 @@ const post = await db.query.posts.findFirst({
     with: {
         account: true,
         media: true,
+        poll: { with: { options: true } },
         sharing: {
             with: {
                 account: true,
                 media: true,
+                poll: { with: { options: true } },
                 replyTarget: { with: { account: true } },
             },
         },
@@ -38,10 +40,12 @@ const post = await db.query.posts.findFirst({
             with: {
                 account: true,
                 media: true,
+                poll: { with: { options: true } },
                 sharing: {
                     with: {
                         account: true,
                         media: true,
+                        poll: { with: { options: true } },
                         replyTarget: { with: { account: true } },
                     },
                 },

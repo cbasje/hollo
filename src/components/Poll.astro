@@ -1,0 +1,50 @@
+---
+import type {
+    Medium as DbMedium,
+    Poll as DbPoll,
+    Post as DbPost,
+    PollOption,
+} from "../schema";
+
+interface Props {
+    poll: DbPoll & { options: PollOption[] };
+}
+
+const { poll } = Astro.props;
+
+const options = poll.options;
+options.sort((a, b) => (a.index < b.index ? -1 : 1));
+
+const totalVotes = options.reduce((acc, option) => acc + option.votesCount, 0);
+---
+
+<table>
+    <thead>
+        <tr>
+            <th>Option</th>
+            <th>Voters</th>
+        </tr>
+    </thead>
+    <tbody>
+        {
+            options.map((option) => {
+                const percent =
+                    option.votesCount <= 0
+                        ? 0
+                        : Math.round((option.votesCount / totalVotes) * 100);
+                return (
+                    <tr key={option.index}>
+                        <td>{option.title}</td>
+                        <td>
+                            <span
+                                style={`display: block; width: ${percent}%; white-space: nowrap; border: 1px solid white; border-radius: 5px; padding: 3px 5px; background-color: black; color: white; text-shadow: 0 0 2px black;`}
+                            >
+                                {option.votesCount} ({percent}%)
+                            </span>
+                        </td>
+                    </tr>
+                );
+            })
+        }
+    </tbody>
+</table>
