@@ -27,10 +27,12 @@ const postList = await db.query.posts.findMany({
     with: {
         account: true,
         media: true,
+        poll: { with: { options: true } },
         sharing: {
             with: {
                 account: true,
                 media: true,
+                poll: { with: { options: true } },
                 replyTarget: { with: { account: true } },
             },
         },
@@ -45,10 +47,12 @@ const pinnedPostList = await db.query.pinnedPosts.findMany({
             with: {
                 account: true,
                 media: true,
+                poll: { with: { options: true } },
                 sharing: {
                     with: {
                         account: true,
                         media: true,
+                        poll: { with: { options: true } },
                         replyTarget: { with: { account: true } },
                     },
                 },

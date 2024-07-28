@@ -1,9 +1,18 @@
 ---
-import type { Medium as DbMedium, Post as DbPost } from "../schema";
+import type {
+    Medium as DbMedium,
+    Poll as DbPoll,
+    Post as DbPost,
+    PollOption,
+} from "../schema";
 import Medium from "./Medium.astro";
+import Poll from "./Poll.astro";
 
 interface Props {
-    readonly post: DbPost & { media: DbMedium[] };
+    readonly post: DbPost & {
+        media: DbMedium[];
+        poll: (DbPoll & { options: PollOption[] }) | null;
+    };
 }
 
 const { post } = Astro.props;
@@ -14,6 +23,7 @@ const { post } = Astro.props;
         <div set:html={post.contentHtml} lang={post.language ?? undefined} />
     )
 }
+{post.poll != null && <Poll poll={post.poll} />}
 {
     post.media.length > 0 && (
         <div>

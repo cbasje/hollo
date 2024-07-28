@@ -1,15 +1,23 @@
 ---
-import type { Account, Medium as DbMedium, Post as DbPost } from "../schema";
+import type {
+    Account,
+    Medium as DbMedium,
+    Poll as DbPoll,
+    Post as DbPost,
+    PollOption,
+} from "../schema";
 import PostContent from "./PostContent.astro";
 
 interface Props {
     post: DbPost & {
         account: Account;
         media: DbMedium[];
+        poll: (DbPoll & { options: PollOption[] }) | null;
         sharing:
             | (DbPost & {
                   account: Account;
                   media: DbMedium[];
+                  poll: (DbPoll & { options: PollOption[] }) | null;
                   replyTarget: (DbPost & { account: Account }) | null;
               })
             | null;
