@@ -1,10 +1,5 @@
 ---
-import type {
-  Medium as DbMedium,
-  Poll as DbPoll,
-  Post as DbPost,
-  PollOption,
-} from "../schema";
+import type { Poll as DbPoll, PollOption } from "../schema";
 
 interface Props {
   poll: DbPoll & { options: PollOption[] };
@@ -29,11 +24,11 @@ const totalVotes = options.reduce((acc, option) => acc + option.votesCount, 0);
         {
             options.map((option) => {
                 const percent =
-                    option.votesCount <= 0
-                        ? 0
-                        : Math.round((option.votesCount / totalVotes) * 100);
+                    option.votesCount > 0
+                        ? Math.round((option.votesCount / totalVotes) * 100)
+                        : 0;
                 return (
-                    <tr key={option.index}>
+                    <tr>
                         <td>{option.title}</td>
                         <td>
                             <span
