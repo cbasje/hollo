@@ -1,4 +1,5 @@
 import {
+  ZonedDateTime,
   getLocalTimeZone,
   startOfWeek,
   today,
@@ -17,37 +18,41 @@ export const isValidDate = (input: Date | string | null | undefined) => {
   return true;
 };
 
-export const formatTrackTime = (timeZone: string, start: Date, end?: Date) => {
-  const trackTimeFormat = new Intl.DateTimeFormat(undefined, {
+export const formatDate = (start: CalendarDate, end?: CalendarDate) => {
+  const tz = getLocalTimeZone();
+
+  const formatter = new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+  });
+
+  if (end !== undefined) {
+    return formatter.formatRange(start.toDate(tz), end.toDate(tz));
+  }
+
+  return formatter.format(start.toDate(tz));
+};
+
+export const formatFixedTime = (
+  start: ZonedDateTime,
+  end?: ZonedDateTime,
+  timeZone?: string,
+) => {
+  const yourTimeFormat = new Intl.DateTimeFormat(undefined, {
     weekday: "short",
     hour: "numeric",
     minute: "numeric",
     timeZone,
   });
 
-  if (end !== undefined) {
-    return trackTimeFormat.formatRange(start, end);
+  if (end) {
+    return yourTimeFormat.formatRange(start.toDate(), end.toDate());
+  } else {
+    return yourTimeFormat.format(start.toDate());
   }
-
-  return trackTimeFormat.format(start);
 };
 
-export const formatYourTime = (start: Date, end?: Date) => {
-  const yourTimeFormat = new Intl.DateTimeFormat(undefined, {
-    weekday: "short",
-    hour: "numeric",
-    minute: "numeric",
-  });
-
-  if (end !== undefined) {
-    return yourTimeFormat.formatRange(start, end);
-  }
-
-  return yourTimeFormat.format(start);
-};
-
-export const formatRelTime = (date: Date, now: number) => {
-  const rel = date.valueOf() - now;
+export const formatRelTime = (date: ZonedDateTime, now: number) => {
+  const rel = date.toDate().valueOf() - now;
   const relTimeFormat = new Intl.RelativeTimeFormat(undefined, {
     style: "long",
     numeric: "auto",
@@ -83,12 +88,7 @@ export const formatRangeWeekend = (weekendOffset: number | string) => {
       : weekendOffset;
   const [start, end] = getWeekendDatesFromOffset(weekendOffsetNumber);
 
-  const tz = getLocalTimeZone();
-
-  const formatter = new Intl.DateTimeFormat(undefined, {
-    dateStyle: "medium",
-  });
-  return formatter.formatRange(start.toDate(tz), end.toDate(tz));
+  return formatDate(start, end);
 };
 
 export const getWeekendDatesFromOffset = (

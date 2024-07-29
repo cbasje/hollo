@@ -1,12 +1,14 @@
 ---
+import { parseDate, parseZonedDateTime } from "@internationalized/date";
 import { Icon } from "astro-icon/components";
 import { getSeriesIcon } from "../db/rounds/utils";
 import * as sessions from "../db/sessions/repository";
 import { getSessionTitle } from "../db/sessions/utils";
 import {
+  formatDate,
+  formatFixedTime,
   formatRangeWeekend,
   formatRelWeekend,
-  formatYourTime,
 } from "../utils/date";
 
 const { searchParams } = Astro.url;
@@ -46,9 +48,21 @@ const weekend = await sessions.getWeekend(weekOffset);
                         )}
                     </h2>
 
-                    <time datetime={session.start.toISOString()}>
-                        {formatYourTime(session.start, session.end)}
-                    </time>
+                    {session.allDay ? (
+                        <time datetime={session.start}>
+                            {formatDate(
+                                parseDate(session.start),
+                                parseDate(session.end)
+                            )}
+                        </time>
+                    ) : (
+                        <time datetime={session.start}>
+                            {formatFixedTime(
+                                parseZonedDateTime(session.start),
+                                parseZonedDateTime(session.end)
+                            )}
+                        </time>
+                    )}
                 </hgroup>
             </button>
         ))
