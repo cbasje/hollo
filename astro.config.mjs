@@ -8,6 +8,10 @@ export default defineConfig({
   output: "server",
   adapter: hono(),
 
+  experimental: {
+    serverIslands: true,
+  },
+
   integrations: [
     icon({
       include: {

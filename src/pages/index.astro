@@ -1,19 +1,21 @@
 ---
 import AccountList from "../components/AccountList.astro";
 import WeekendCalendar from "../components/WeekendCalendar.astro";
-import db from "../db";
 import BaseLayout from "../layouts/BaseLayout.astro";
 
-const credential = await db.query.credentials.findFirst();
-if (credential == null) return Astro.redirect("/setup");
+export const prerender = true;
 ---
 
 <BaseLayout title="Porpoise">
     <h1>Porpoise</h1>
 
-    <WeekendCalendar />
+    <WeekendCalendar server:defer>
+        <div slot="fallback">Loading WeekendCalendar...</div>
+    </WeekendCalendar>
 
-    <AccountList />
+    <AccountList server:defer>
+        <div slot="fallback">Loading AccountList...</div>
+    </AccountList>
 
     <div>
         <a role="button" href="/accounts">
