@@ -8,6 +8,9 @@ export default {
   schema: ["./src/schema.ts", "./src/hunter/schema.ts"],
   out: "./drizzle",
   dialect: "postgresql",
+  migrations: {
+    prefix: "timestamp",
+  },
   dbCredentials: {
     url: databaseUrl,
   },

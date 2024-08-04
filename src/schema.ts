@@ -1,6 +1,5 @@
 import { relations } from "drizzle-orm";
 import {
-  type AnyPgColumn,
   bigint,
   bigserial,
   boolean,
@@ -9,15 +8,18 @@ import {
   json,
   jsonb,
   pgEnum,
-  pgTable,
+  pgTableCreator,
   primaryKey,
   text,
   timestamp,
   unique,
   uuid,
   varchar,
+  type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 import type { PreviewCard } from "./previewcard";
+
+const pgTable = pgTableCreator((name) => `hollo_${name}`);
 
 export const credentials = pgTable("credentials", {
   email: varchar("email", { length: 254 }).primaryKey(),
