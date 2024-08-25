@@ -1,5 +1,5 @@
 ---
-import { parseDate, parseZonedDateTime } from "@internationalized/date";
+import { parseAbsolute, parseDate } from "@internationalized/date";
 import { Icon } from "astro-icon/components";
 import { getSeriesIcon } from "../db/rounds/utils";
 import * as sessions from "../db/sessions/repository";
@@ -11,9 +11,11 @@ import {
   formatRelWeekend,
 } from "../utils/date";
 
-const { searchParams } = Astro.url;
+interface Props {
+  weekOffset: number;
+}
 
-const weekOffset = Number(searchParams.get("offset") || "0");
+const { weekOffset } = Astro.props;
 const weekend = await sessions.getWeekend(weekOffset);
 ---
 
@@ -25,8 +27,11 @@ const weekend = await sessions.getWeekend(weekOffset);
 </hgroup>
 
 {
-    weekend &&
-        weekend.map((session) => (
+    Array.from({ length: 7 }, (_, index) => {
+        const weekDay = weekend.find((w) => w.weekDay === (index + 1) % 7); // Sunday is 0
+        console.log("index", index, "weekDay", weekDay);
+
+        return weekDay?.sessions.map((session) => (
             <button
                 is="navigate-button"
                 data-link={`/session/${session.id}`}
@@ -58,15 +63,27 @@ const weekend = await sessions.getWeekend(weekOffset);
                     ) : (
                         <time datetime={session.start}>
                             {formatFixedTime(
-                                parseZonedDateTime(session.start),
-                                parseZonedDateTime(session.end)
+                                parseAbsolute(session.start, "UTC"),
+                                parseAbsolute(session.end, "UTC")
                             )}
                         </time>
                     )}
                 </hgroup>
             </button>
-        ))
+        ));
+    })
 }
+
+<div>
+    <a href={`?offset=${weekOffset - 1}`} class="btn btn-surface">
+        <Icon name="hollow/angle-up" />
+        <span>Previous</span>
+    </a>
+    <a href={`?offset=${weekOffset + 1}`} class="btn btn-surface">
+        <Icon name="hollow/angle-down" />
+        <span>Next</span>
+    </a>
+</div>
 
 <script>
     import { navigate } from "astro:transitions/client";

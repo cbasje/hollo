@@ -3,13 +3,14 @@ import AccountList from "../components/AccountList.astro";
 import WeekendCalendar from "../components/WeekendCalendar.astro";
 import BaseLayout from "../layouts/BaseLayout.astro";
 
-export const prerender = true;
+const { searchParams } = Astro.url;
+const weekOffset = Number(searchParams.get("offset") || "0");
 ---
 
 <BaseLayout title="Porpoise">
     <h1>Porpoise</h1>
 
-    <WeekendCalendar server:defer>
+    <WeekendCalendar weekOffset={weekOffset} server:defer>
         <div slot="fallback">Loading WeekendCalendar...</div>
     </WeekendCalendar>
 
