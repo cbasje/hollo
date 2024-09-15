@@ -17,7 +17,7 @@ const owners = await db.query.accountOwners.findMany({
                 </hgroup>
             </header>
 
-            <div set:html={{ __html: xss(account.bioHtml ?? "") }} />
+            <div set:html={xss(account.bioHtml ?? "")} />
           
             <p>
               {account.published ? (
