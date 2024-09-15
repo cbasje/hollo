@@ -1,5 +1,6 @@
 import { relations } from "drizzle-orm";
 import {
+  type AnyPgColumn,
   bigint,
   bigserial,
   boolean,
@@ -15,7 +16,6 @@ import {
   unique,
   uuid,
   varchar,
-  type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 import type { PreviewCard } from "./previewcard";
 
@@ -109,7 +109,7 @@ export const accountOwners = pgTable("account_owners", {
     .notNull(),
   fields: json("fields").notNull().default({}).$type<Record<string, string>>(),
   bio: text("bio"),
-  followedTags: text("followed_tags").array().notNull().default([]),
+  followedTags: text("followed_tags").array().notNull(),
   visibility: postVisibilityEnum("visibility").notNull().default("public"),
   language: text("language").notNull().default("en"),
 });

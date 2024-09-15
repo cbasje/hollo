@@ -58,7 +58,7 @@ if (Astro.request.method === "POST") {
     Astro.response.status = 400;
     return;
   }
-  
+
   const fedCtx = federation.createContext(c.req.raw, undefined);
   await db.transaction(async (tx) => {
     const account = await tx
