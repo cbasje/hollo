@@ -10,11 +10,11 @@ const weekOffset = Number(searchParams.get("offset") || "0");
 <BaseLayout title="Porpoise">
     <h1>Porpoise</h1>
 
-    <WeekendCalendar weekOffset={weekOffset} server:defer>
+    <WeekendCalendar weekOffset={weekOffset}>
         <div slot="fallback">Loading WeekendCalendar...</div>
     </WeekendCalendar>
 
-    <AccountList server:defer>
+    <AccountList>
         <div slot="fallback">Loading AccountList...</div>
     </AccountList>
 
