@@ -1,0 +1,111 @@
+---
+import { exportJwk, generateCryptoKeyPair } from "@fedify/fedify";
+import db from "../../db";
+import federation from "../../federation";
+import { type PostVisibility, accountOwners, accounts } from "../../schema";
+import { formatText } from "../../text";
+import AccountForm from "../../components/AccountForm.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+let values:
+  | {
+      username?: string;
+      name?: string;
+      bio?: string;
+      protected?: boolean;
+      language?: string;
+      visibility?: PostVisibility;
+    }
+  | undefined;
+let errors:
+  | {
+      username?: string;
+      name?: string;
+      bio?: string;
+    }
+  | undefined;
+
+if (Astro.request.method === "POST") {
+  const form = await Astro.request.formData();
+  const username = form.get("username")?.toString()?.trim();
+  const name = form.get("name")?.toString()?.trim();
+  const bio = form.get("bio")?.toString()?.trim();
+  const protected_ = form.get("protected") != null;
+  const language = form.get("language")?.toString()?.trim();
+  const visibility = form
+    .get("visibility")
+    ?.toString()
+    ?.trim() as PostVisibility;
+
+  if (username == null || username === "" || name == null || name === "") {
+    values = {
+      username,
+      name,
+      bio,
+      protected: protected_,
+      language,
+      visibility,
+    };
+    errors = {
+      username:
+        username == null || username === ""
+          ? "Username is required."
+          : undefined,
+      name:
+        name == null || name === "" ? "Display name is required." : undefined,
+    };
+
+    Astro.response.status = 400;
+    return;
+  }
+
+  const fedCtx = federation.createContext(c.req.raw, undefined);
+  await db.transaction(async (tx) => {
+    const account = await tx
+      .insert(accounts)
+      .values({
+        id: crypto.randomUUID(),
+        iri: fedCtx.getActorUri(username).href,
+        type: "Person",
+        name,
+        handle: `@${username}@${fedCtx.url.host}`,
+        bioHtml: (await formatText(tx, bio ?? "", fedCtx)).html,
+        url: fedCtx.getActorUri(username).href,
+        protected: protected_,
+        inboxUrl: fedCtx.getInboxUri(username).href,
+        followersUrl: fedCtx.getFollowersUri(username).href,
+        sharedInboxUrl: fedCtx.getInboxUri().href,
+        featuredUrl: fedCtx.getFeaturedUri(username).href,
+        published: new Date(),
+      })
+      .returning();
+
+    const rsaKeyPair = await generateCryptoKeyPair("RSASSA-PKCS1-v1_5");
+    const ed25519KeyPair = await generateCryptoKeyPair("Ed25519");
+
+    await tx.insert(accountOwners).values({
+      id: account[0].id,
+      handle: username,
+      rsaPrivateKeyJwk: await exportJwk(rsaKeyPair.privateKey),
+      rsaPublicKeyJwk: await exportJwk(rsaKeyPair.publicKey),
+      ed25519PrivateKeyJwk: await exportJwk(ed25519KeyPair.privateKey),
+      ed25519PublicKeyJwk: await exportJwk(ed25519KeyPair.publicKey),
+      bio: bio ?? "",
+      language: language ?? "en",
+      visibility: visibility ?? "public",
+    });
+  });
+}
+---
+
+<BaseLayout title="Hollo: New account">
+  <hgroup>
+      <h1>Create a new account</h1>
+      <p>You can create a new account by filling out the form below.</p>
+  </hgroup>
+  <AccountForm
+      action="/accounts/new"
+      values={{ language: "en" }}
+      submitLabel="Create a new account"
+  />
+</BaseLayout>

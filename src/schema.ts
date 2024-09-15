@@ -1,5 +1,6 @@
 import { relations } from "drizzle-orm";
 import {
+  type AnyPgColumn,
   bigint,
   bigserial,
   boolean,
@@ -15,7 +16,6 @@ import {
   unique,
   uuid,
   varchar,
-  type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 import type { PreviewCard } from "./previewcard";
 
@@ -78,6 +78,8 @@ export const accountRelations = relations(accounts, ({ one, many }) => ({
   mentions: many(mentions),
   likes: many(likes),
   pinnedPosts: many(pinnedPosts),
+  mutes: many(mutes, { relationName: "muter" }),
+  mutedBy: many(mutes, { relationName: "muted" }),
 }));
 
 export type Account = typeof accounts.$inferSelect;
@@ -107,7 +109,7 @@ export const accountOwners = pgTable("account_owners", {
     .notNull(),
   fields: json("fields").notNull().default({}).$type<Record<string, string>>(),
   bio: text("bio"),
-  followedTags: text("followed_tags").array().notNull().default([]),
+  followedTags: text("followed_tags").array().notNull(),
   visibility: postVisibilityEnum("visibility").notNull().default("public"),
   language: text("language").notNull().default("en"),
 });
@@ -283,6 +285,10 @@ export const posts = pgTable(
     sharingId: uuid("sharing_id").references((): AnyPgColumn => posts.id, {
       onDelete: "cascade",
     }),
+    quoteTargetId: uuid("quote_target_id").references(
+      (): AnyPgColumn => posts.id,
+      { onDelete: "set null" },
+    ),
     visibility: postVisibilityEnum("visibility").notNull(),
     summaryHtml: text("summary_html"),
     summary: text("summary"),
@@ -330,18 +336,20 @@ export const postRelations = relations(posts, ({ one, many }) => ({
     references: [posts.id],
     relationName: "reply",
   }),
-  replies: many(posts, {
-    relationName: "reply",
-  }),
+  replies: many(posts, { relationName: "reply" }),
   likes: many(likes),
   sharing: one(posts, {
     fields: [posts.sharingId],
     references: [posts.id],
     relationName: "share",
   }),
-  shares: many(posts, {
-    relationName: "share",
+  shares: many(posts, { relationName: "share" }),
+  quoteTarget: one(posts, {
+    fields: [posts.quoteTargetId],
+    references: [posts.id],
+    relationName: "quote",
   }),
+  quotes: many(posts, { relationName: "quote" }),
   media: many(media),
   poll: one(polls, {
     fields: [posts.pollId],
@@ -715,5 +723,44 @@ export const listMemberRelations = relations(listMembers, ({ one }) => ({
   account: one(accounts, {
     fields: [listMembers.accountId],
     references: [accounts.id],
+  }),
+}));
+
+export const mutes = pgTable(
+  "mutes",
+  {
+    id: uuid("id").primaryKey(),
+    accountId: uuid("account_id")
+      .notNull()
+      .references(() => accounts.id, { onDelete: "cascade" }),
+    mutedAccountId: uuid("muted_account_id")
+      .notNull()
+      .references(() => accounts.id, { onDelete: "cascade" }),
+    notifications: boolean("notifications").notNull().default(true),
+    duration: integer("duration").notNull().default(0),
+    created: timestamp("created", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => ({
+    uniqueAccountIdMutedAccountId: unique(
+      "mutes_account_id_muted_account_id_unique",
+    ).on(table.accountId, table.mutedAccountId),
+  }),
+);
+
+export type Mute = typeof mutes.$inferSelect;
+export type NewMute = typeof mutes.$inferInsert;
+
+export const muteRelations = relations(mutes, ({ one }) => ({
+  account: one(accounts, {
+    fields: [mutes.accountId],
+    references: [accounts.id],
+    relationName: "muter",
+  }),
+  targetAccount: one(accounts, {
+    fields: [mutes.mutedAccountId],
+    references: [accounts.id],
+    relationName: "muted",
   }),
 }));

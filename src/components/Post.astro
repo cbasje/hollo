@@ -19,14 +19,31 @@ interface Props {
           media: DbMedium[];
           poll: (DbPoll & { options: PollOption[] }) | null;
           replyTarget: (DbPost & { account: Account }) | null;
+          quoteTarget:
+            | (DbPost & {
+                account: Account;
+                media: DbMedium[];
+                poll: (DbPoll & { options: PollOption[] }) | null;
+                replyTarget: (DbPost & { account: Account }) | null;
+              })
+            | null;
         })
       | null;
     replyTarget: (DbPost & { account: Account }) | null;
+    quoteTarget:
+      | (DbPost & {
+          account: Account;
+          media: DbMedium[];
+          poll: (DbPoll & { options: PollOption[] }) | null;
+          replyTarget: (DbPost & { account: Account }) | null;
+        })
+      | null;
   };
   pinned?: boolean;
+  quoted?: boolean;
 }
 
-let { post, pinned } = Astro.props;
+let { post, pinned, quoted } = Astro.props;
 
 if (post.sharing != null) {
   post = { ...post.sharing, sharing: null };
@@ -35,7 +52,15 @@ if (post.sharing != null) {
 const account = post.account;
 ---
 
-<article style={pinned ? "border: 1px solid gray;" : ""}>
+<article
+    style={
+      pinned
+        ? "border: 1px solid silver;"
+        : quoted
+          ? "border: calc(var(--pico-border-width)*4) solid var(--pico-background-color);"
+          : ""
+    }
+>
     <header>
         <hgroup>
             {
@@ -49,9 +74,11 @@ const account = post.account;
                     />
                 )
             }
-            <h5>
-                <a href={account.url ?? account.iri}>{account.name}</a>
-            </h5>
+            {quoted ? (
+                <h6 style="font-size: smaller;"><a href={account.url ?? account.iri}>{account.name}</a></h6>
+            ) : (
+                <h5><a href={account.url ?? account.iri}>{account.name}</a></h5>
+            )}
             <p>
                 <small style="user-select: all;">{account.handle}</small>
                 {
@@ -102,6 +129,22 @@ const account = post.account;
                     </time>
                 </small>
             </a>
+            <small>
+              {" "}
+              &middot; 👍{" "}
+              {`${post.likesCount} ${
+                post.likesCount === null || post.likesCount < 2 ? "like" : "likes"
+              }`}
+            </small>
+            <small>
+              {" "}
+              &middot; 🔁{" "}
+              {`${post.sharesCount} ${
+                post.sharesCount === null || post.sharesCount < 2
+                  ? "share"
+                  : "shares"
+              }`}
+            </small>
             {pinned ? <small> &middot; Pinned</small> : ""}
         </p>
     </footer>

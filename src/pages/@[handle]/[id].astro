@@ -33,9 +33,25 @@ const post = await db.query.posts.findFirst({
         media: true,
         poll: { with: { options: true } },
         replyTarget: { with: { account: true } },
+        quoteTarget: {
+          with: {
+            account: true,
+            media: true,
+            poll: { with: { options: true } },
+            replyTarget: { with: { account: true } },
+          },
+        },
       },
     },
     replyTarget: { with: { account: true } },
+    quoteTarget: {
+      with: {
+        account: true,
+        media: true,
+        poll: { with: { options: true } },
+        replyTarget: { with: { account: true } },
+      },
+    },
     replies: {
       with: {
         account: true,
@@ -47,9 +63,25 @@ const post = await db.query.posts.findFirst({
             media: true,
             poll: { with: { options: true } },
             replyTarget: { with: { account: true } },
+            quoteTarget: {
+              with: {
+                account: true,
+                media: true,
+                poll: { with: { options: true } },
+                replyTarget: { with: { account: true } },
+              },
+            },
           },
         },
         replyTarget: { with: { account: true } },
+        quoteTarget: {
+          with: {
+            account: true,
+            media: true,
+            poll: { with: { options: true } },
+            replyTarget: { with: { account: true } },
+          },
+        },
       },
     },
   },

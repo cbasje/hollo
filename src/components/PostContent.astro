@@ -4,14 +4,24 @@ import type {
   Poll as DbPoll,
   Post as DbPost,
   PollOption,
+  Account,
 } from "../schema";
 import Medium from "./Medium.astro";
 import Poll from "./Poll.astro";
+import Post from "./Post.astro";
 
 interface Props {
-  readonly post: DbPost & {
+  post: DbPost & {
     media: DbMedium[];
     poll: (DbPoll & { options: PollOption[] }) | null;
+    quoteTarget:
+      | (DbPost & {
+          account: Account;
+          media: DbMedium[];
+          poll: (DbPoll & { options: PollOption[] }) | null;
+          replyTarget: (DbPost & { account: Account }) | null;
+        })
+      | null;
   };
 }
 
@@ -38,5 +48,13 @@ const { post } = Astro.props;
                 )
             )}
         </div>
+    )
+}
+{
+    post.quoteTarget != null && (
+        <Post
+          post={{ ...post.quoteTarget, sharing: null, quoteTarget: null }}
+          quoted={true}
+        />
     )
 }

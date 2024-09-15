@@ -1,0 +1,2087 @@
+{
+  "id": "e66dbb6c-80cd-4dde-aadf-0a37f172ad60",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.hollo_access_tokens": {
+      "name": "hollo_access_tokens",
+      "schema": "",
+      "columns": {
+        "code": {
+          "name": "code",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "application_id": {
+          "name": "application_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "account_owner_id": {
+          "name": "account_owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "grant_type": {
+          "name": "grant_type",
+          "type": "grant_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'authorization_code'"
+        },
+        "scopes": {
+          "name": "scopes",
+          "type": "scope[]",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created": {
+          "name": "created",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "hollo_access_tokens_application_id_hollo_applications_id_fk": {
+          "name": "hollo_access_tokens_application_id_hollo_applications_id_fk",
+          "tableFrom": "hollo_access_tokens",
+          "tableTo": "hollo_applications",
+          "columnsFrom": [
+            "application_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "hollo_access_tokens_account_owner_id_hollo_account_owners_id_fk": {
+          "name": "hollo_access_tokens_account_owner_id_hollo_account_owners_id_fk",
+          "tableFrom": "hollo_access_tokens",
+          "tableTo": "hollo_account_owners",
+          "columnsFrom": [
+            "account_owner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.hollo_account_owners": {
+      "name": "hollo_account_owners",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "handle": {
+          "name": "handle",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rsa_private_key_jwk": {
+          "name": "rsa_private_key_jwk",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rsa_public_key_jwk": {
+          "name": "rsa_public_key_jwk",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ed25519_private_key_jwk": {
+          "name": "ed25519_private_key_jwk",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ed25519_public_key_jwk": {
+          "name": "ed25519_public_key_jwk",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fields": {
+          "name": "fields",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::json"
+        },
+        "bio": {
+          "name": "bio",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "followed_tags": {
+          "name": "followed_tags",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "visibility": {
+          "name": "visibility",
+          "type": "post_visibility",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'public'"
+        },
+        "language": {
+          "name": "language",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'en'"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "hollo_account_owners_id_hollo_accounts_id_fk": {
+          "name": "hollo_account_owners_id_hollo_accounts_id_fk",
+          "tableFrom": "hollo_account_owners",
+          "tableTo": "hollo_accounts",
+          "columnsFrom": [
+            "id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "hollo_account_owners_handle_unique": {
+          "name": "hollo_account_owners_handle_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "handle"
+          ]
+        }
+      }
+    },
+    "public.hollo_accounts": {
+      "name": "hollo_accounts",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "iri": {
+          "name": "iri",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "account_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "handle": {
+          "name": "handle",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "bio_html": {
+          "name": "bio_html",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "url": {
+          "name": "url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "protected": {
+          "name": "protected",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "avatar_url": {
+          "name": "avatar_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cover_url": {
+          "name": "cover_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "inbox_url": {
+          "name": "inbox_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "followers_url": {
+          "name": "followers_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "shared_inbox_url": {
+          "name": "shared_inbox_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "featured_url": {
+          "name": "featured_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "following_count": {
+          "name": "following_count",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false,
+          "default": 0
+        },
+        "followers_count": {
+          "name": "followers_count",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false,
+          "default": 0
+        },
+        "posts_count": {
+          "name": "posts_count",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false,
+          "default": 0
+        },
+        "field_htmls": {
+          "name": "field_htmls",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::json"
+        },
+        "sensitive": {
+          "name": "sensitive",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "published": {
+          "name": "published",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated": {
+          "name": "updated",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "hollo_accounts_iri_unique": {
+          "name": "hollo_accounts_iri_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "iri"
+          ]
+        },
+        "hollo_accounts_handle_unique": {
+          "name": "hollo_accounts_handle_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "handle"
+          ]
+        }
+      }
+    },
+    "public.hollo_applications": {
+      "name": "hollo_applications",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "redirect_uris": {
+          "name": "redirect_uris",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "scopes": {
+          "name": "scopes",
+          "type": "scope[]",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "website": {
+          "name": "website",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "client_id": {
+          "name": "client_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "client_secret": {
+          "name": "client_secret",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created": {
+          "name": "created",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "hollo_applications_client_id_unique": {
+          "name": "hollo_applications_client_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "client_id"
+          ]
+        }
+      }
+    },
+    "public.hollo_bookmarks": {
+      "name": "hollo_bookmarks",
+      "schema": "",
+      "columns": {
+        "post_id": {
+          "name": "post_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "account_owner_id": {
+          "name": "account_owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created": {
+          "name": "created",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "hollo_bookmarks_post_id_hollo_posts_id_fk": {
+          "name": "hollo_bookmarks_post_id_hollo_posts_id_fk",
+          "tableFrom": "hollo_bookmarks",
+          "tableTo": "hollo_posts",
+          "columnsFrom": [
+            "post_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "hollo_bookmarks_account_owner_id_hollo_account_owners_id_fk": {
+          "name": "hollo_bookmarks_account_owner_id_hollo_account_owners_id_fk",
+          "tableFrom": "hollo_bookmarks",
+          "tableTo": "hollo_account_owners",
+          "columnsFrom": [
+            "account_owner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "hollo_bookmarks_post_id_account_owner_id_pk": {
+          "name": "hollo_bookmarks_post_id_account_owner_id_pk",
+          "columns": [
+            "post_id",
+            "account_owner_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {}
+    },
+    "public.hollo_credentials": {
+      "name": "hollo_credentials",
+      "schema": "",
+      "columns": {
+        "email": {
+          "name": "email",
+          "type": "varchar(254)",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "password_hash": {
+          "name": "password_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created": {
+          "name": "created",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.hollo_featured_tags": {
+      "name": "hollo_featured_tags",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "account_owner_id": {
+          "name": "account_owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created": {
+          "name": "created",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "hollo_featured_tags_account_owner_id_hollo_account_owners_id_fk": {
+          "name": "hollo_featured_tags_account_owner_id_hollo_account_owners_id_fk",
+          "tableFrom": "hollo_featured_tags",
+          "tableTo": "hollo_account_owners",
+          "columnsFrom": [
+            "account_owner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "hollo_featured_tags_account_owner_id_name_unique": {
+          "name": "hollo_featured_tags_account_owner_id_name_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "account_owner_id",
+            "name"
+          ]
+        }
+      }
+    },
+    "public.hollo_follows": {
+      "name": "hollo_follows",
+      "schema": "",
+      "columns": {
+        "iri": {
+          "name": "iri",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "following_id": {
+          "name": "following_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "follower_id": {
+          "name": "follower_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "shares": {
+          "name": "shares",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "notify": {
+          "name": "notify",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "languages": {
+          "name": "languages",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created": {
+          "name": "created",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "approved": {
+          "name": "approved",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "hollo_follows_following_id_hollo_accounts_id_fk": {
+          "name": "hollo_follows_following_id_hollo_accounts_id_fk",
+          "tableFrom": "hollo_follows",
+          "tableTo": "hollo_accounts",
+          "columnsFrom": [
+            "following_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "hollo_follows_follower_id_hollo_accounts_id_fk": {
+          "name": "hollo_follows_follower_id_hollo_accounts_id_fk",
+          "tableFrom": "hollo_follows",
+          "tableTo": "hollo_accounts",
+          "columnsFrom": [
+            "follower_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "hollo_follows_following_id_follower_id_pk": {
+          "name": "hollo_follows_following_id_follower_id_pk",
+          "columns": [
+            "following_id",
+            "follower_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {
+        "hollo_follows_iri_unique": {
+          "name": "hollo_follows_iri_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "iri"
+          ]
+        }
+      }
+    },
+    "public.hollo_likes": {
+      "name": "hollo_likes",
+      "schema": "",
+      "columns": {
+        "post_id": {
+          "name": "post_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "account_id": {
+          "name": "account_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created": {
+          "name": "created",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "hollo_likes_post_id_hollo_posts_id_fk": {
+          "name": "hollo_likes_post_id_hollo_posts_id_fk",
+          "tableFrom": "hollo_likes",
+          "tableTo": "hollo_posts",
+          "columnsFrom": [
+            "post_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "hollo_likes_account_id_hollo_accounts_id_fk": {
+          "name": "hollo_likes_account_id_hollo_accounts_id_fk",
+          "tableFrom": "hollo_likes",
+          "tableTo": "hollo_accounts",
+          "columnsFrom": [
+            "account_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "hollo_likes_post_id_account_id_pk": {
+          "name": "hollo_likes_post_id_account_id_pk",
+          "columns": [
+            "post_id",
+            "account_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {}
+    },
+    "public.hollo_list_members": {
+      "name": "hollo_list_members",
+      "schema": "",
+      "columns": {
+        "list_id": {
+          "name": "list_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "account_id": {
+          "name": "account_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created": {
+          "name": "created",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "hollo_list_members_list_id_hollo_lists_id_fk": {
+          "name": "hollo_list_members_list_id_hollo_lists_id_fk",
+          "tableFrom": "hollo_list_members",
+          "tableTo": "hollo_lists",
+          "columnsFrom": [
+            "list_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "hollo_list_members_account_id_hollo_accounts_id_fk": {
+          "name": "hollo_list_members_account_id_hollo_accounts_id_fk",
+          "tableFrom": "hollo_list_members",
+          "tableTo": "hollo_accounts",
+          "columnsFrom": [
+            "account_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "hollo_list_members_list_id_account_id_pk": {
+          "name": "hollo_list_members_list_id_account_id_pk",
+          "columns": [
+            "list_id",
+            "account_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {}
+    },
+    "public.hollo_lists": {
+      "name": "hollo_lists",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "account_owner_id": {
+          "name": "account_owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "replies_policy": {
+          "name": "replies_policy",
+          "type": "list_replies_policy",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'list'"
+        },
+        "exclusive": {
+          "name": "exclusive",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "created": {
+          "name": "created",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "hollo_lists_account_owner_id_hollo_account_owners_id_fk": {
+          "name": "hollo_lists_account_owner_id_hollo_account_owners_id_fk",
+          "tableFrom": "hollo_lists",
+          "tableTo": "hollo_account_owners",
+          "columnsFrom": [
+            "account_owner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.hollo_markers": {
+      "name": "hollo_markers",
+      "schema": "",
+      "columns": {
+        "account_owner_id": {
+          "name": "account_owner_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "marker_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "last_read_id": {
+          "name": "last_read_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "version": {
+          "name": "version",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "updated": {
+          "name": "updated",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "hollo_markers_account_owner_id_hollo_account_owners_id_fk": {
+          "name": "hollo_markers_account_owner_id_hollo_account_owners_id_fk",
+          "tableFrom": "hollo_markers",
+          "tableTo": "hollo_account_owners",
+          "columnsFrom": [
+            "account_owner_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "hollo_markers_account_owner_id_type_pk": {
+          "name": "hollo_markers_account_owner_id_type_pk",
+          "columns": [
+            "account_owner_id",
+            "type"
+          ]
+        }
+      },
+      "uniqueConstraints": {}
+    },
+    "public.hollo_media": {
+      "name": "hollo_media",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "post_id": {
+          "name": "post_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "url": {
+          "name": "url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "width": {
+          "name": "width",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "height": {
+          "name": "height",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "thumbnail_type": {
+          "name": "thumbnail_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "thumbnail_url": {
+          "name": "thumbnail_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "thumbnail_width": {
+          "name": "thumbnail_width",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "thumbnail_height": {
+          "name": "thumbnail_height",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created": {
+          "name": "created",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "hollo_media_post_id_hollo_posts_id_fk": {
+          "name": "hollo_media_post_id_hollo_posts_id_fk",
+          "tableFrom": "hollo_media",
+          "tableTo": "hollo_posts",
+          "columnsFrom": [
+            "post_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.hollo_mentions": {
+      "name": "hollo_mentions",
+      "schema": "",
+      "columns": {
+        "post_id": {
+          "name": "post_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "account_id": {
+          "name": "account_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "hollo_mentions_post_id_hollo_posts_id_fk": {
+          "name": "hollo_mentions_post_id_hollo_posts_id_fk",
+          "tableFrom": "hollo_mentions",
+          "tableTo": "hollo_posts",
+          "columnsFrom": [
+            "post_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "hollo_mentions_account_id_hollo_accounts_id_fk": {
+          "name": "hollo_mentions_account_id_hollo_accounts_id_fk",
+          "tableFrom": "hollo_mentions",
+          "tableTo": "hollo_accounts",
+          "columnsFrom": [
+            "account_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "hollo_mentions_post_id_account_id_pk": {
+          "name": "hollo_mentions_post_id_account_id_pk",
+          "columns": [
+            "post_id",
+            "account_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {}
+    },
+    "public.hollo_mutes": {
+      "name": "hollo_mutes",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "account_id": {
+          "name": "account_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "muted_account_id": {
+          "name": "muted_account_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "notifications": {
+          "name": "notifications",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "duration": {
+          "name": "duration",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "created": {
+          "name": "created",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "hollo_mutes_account_id_hollo_accounts_id_fk": {
+          "name": "hollo_mutes_account_id_hollo_accounts_id_fk",
+          "tableFrom": "hollo_mutes",
+          "tableTo": "hollo_accounts",
+          "columnsFrom": [
+            "account_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "hollo_mutes_muted_account_id_hollo_accounts_id_fk": {
+          "name": "hollo_mutes_muted_account_id_hollo_accounts_id_fk",
+          "tableFrom": "hollo_mutes",
+          "tableTo": "hollo_accounts",
+          "columnsFrom": [
+            "muted_account_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "mutes_account_id_muted_account_id_unique": {
+          "name": "mutes_account_id_muted_account_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "account_id",
+            "muted_account_id"
+          ]
+        }
+      }
+    },
+    "public.hollo_pinned_posts": {
+      "name": "hollo_pinned_posts",
+      "schema": "",
+      "columns": {
+        "index": {
+          "name": "index",
+          "type": "bigserial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "post_id": {
+          "name": "post_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "account_id": {
+          "name": "account_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created": {
+          "name": "created",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "hollo_pinned_posts_account_id_hollo_accounts_id_fk": {
+          "name": "hollo_pinned_posts_account_id_hollo_accounts_id_fk",
+          "tableFrom": "hollo_pinned_posts",
+          "tableTo": "hollo_accounts",
+          "columnsFrom": [
+            "account_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "hollo_pinned_posts_post_id_account_id_hollo_posts_id_actor_id_fk": {
+          "name": "hollo_pinned_posts_post_id_account_id_hollo_posts_id_actor_id_fk",
+          "tableFrom": "hollo_pinned_posts",
+          "tableTo": "hollo_posts",
+          "columnsFrom": [
+            "post_id",
+            "account_id"
+          ],
+          "columnsTo": [
+            "id",
+            "actor_id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "hollo_pinned_posts_post_id_account_id_unique": {
+          "name": "hollo_pinned_posts_post_id_account_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "post_id",
+            "account_id"
+          ]
+        }
+      }
+    },
+    "public.hollo_poll_options": {
+      "name": "hollo_poll_options",
+      "schema": "",
+      "columns": {
+        "poll_id": {
+          "name": "poll_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "index": {
+          "name": "index",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "votes_count": {
+          "name": "votes_count",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "hollo_poll_options_poll_id_hollo_polls_id_fk": {
+          "name": "hollo_poll_options_poll_id_hollo_polls_id_fk",
+          "tableFrom": "hollo_poll_options",
+          "tableTo": "hollo_polls",
+          "columnsFrom": [
+            "poll_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "hollo_poll_options_poll_id_index_pk": {
+          "name": "hollo_poll_options_poll_id_index_pk",
+          "columns": [
+            "poll_id",
+            "index"
+          ]
+        }
+      },
+      "uniqueConstraints": {
+        "hollo_poll_options_poll_id_title_unique": {
+          "name": "hollo_poll_options_poll_id_title_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "poll_id",
+            "title"
+          ]
+        }
+      }
+    },
+    "public.hollo_poll_votes": {
+      "name": "hollo_poll_votes",
+      "schema": "",
+      "columns": {
+        "poll_id": {
+          "name": "poll_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "option_index": {
+          "name": "option_index",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "account_id": {
+          "name": "account_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created": {
+          "name": "created",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "hollo_poll_votes_poll_id_hollo_polls_id_fk": {
+          "name": "hollo_poll_votes_poll_id_hollo_polls_id_fk",
+          "tableFrom": "hollo_poll_votes",
+          "tableTo": "hollo_polls",
+          "columnsFrom": [
+            "poll_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "hollo_poll_votes_account_id_hollo_accounts_id_fk": {
+          "name": "hollo_poll_votes_account_id_hollo_accounts_id_fk",
+          "tableFrom": "hollo_poll_votes",
+          "tableTo": "hollo_accounts",
+          "columnsFrom": [
+            "account_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "hollo_poll_votes_poll_id_option_index_hollo_poll_options_poll_id_index_fk": {
+          "name": "hollo_poll_votes_poll_id_option_index_hollo_poll_options_poll_id_index_fk",
+          "tableFrom": "hollo_poll_votes",
+          "tableTo": "hollo_poll_options",
+          "columnsFrom": [
+            "poll_id",
+            "option_index"
+          ],
+          "columnsTo": [
+            "poll_id",
+            "index"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "hollo_poll_votes_poll_id_option_index_account_id_pk": {
+          "name": "hollo_poll_votes_poll_id_option_index_account_id_pk",
+          "columns": [
+            "poll_id",
+            "option_index",
+            "account_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {}
+    },
+    "public.hollo_polls": {
+      "name": "hollo_polls",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "multiple": {
+          "name": "multiple",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "voters_count": {
+          "name": "voters_count",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "expires": {
+          "name": "expires",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created": {
+          "name": "created",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.hollo_posts": {
+      "name": "hollo_posts",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "iri": {
+          "name": "iri",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "post_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "actor_id": {
+          "name": "actor_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "application_id": {
+          "name": "application_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reply_target_id": {
+          "name": "reply_target_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sharing_id": {
+          "name": "sharing_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "quote_target_id": {
+          "name": "quote_target_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "visibility": {
+          "name": "visibility",
+          "type": "post_visibility",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "summary_html": {
+          "name": "summary_html",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "summary": {
+          "name": "summary",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "content_html": {
+          "name": "content_html",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "content": {
+          "name": "content",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "poll_id": {
+          "name": "poll_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "language": {
+          "name": "language",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tags": {
+          "name": "tags",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "sensitive": {
+          "name": "sensitive",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "url": {
+          "name": "url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "preview_card": {
+          "name": "preview_card",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "replies_count": {
+          "name": "replies_count",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false,
+          "default": 0
+        },
+        "shares_count": {
+          "name": "shares_count",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false,
+          "default": 0
+        },
+        "likes_count": {
+          "name": "likes_count",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false,
+          "default": 0
+        },
+        "published": {
+          "name": "published",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "updated": {
+          "name": "updated",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "hollo_posts_actor_id_hollo_accounts_id_fk": {
+          "name": "hollo_posts_actor_id_hollo_accounts_id_fk",
+          "tableFrom": "hollo_posts",
+          "tableTo": "hollo_accounts",
+          "columnsFrom": [
+            "actor_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "hollo_posts_application_id_hollo_applications_id_fk": {
+          "name": "hollo_posts_application_id_hollo_applications_id_fk",
+          "tableFrom": "hollo_posts",
+          "tableTo": "hollo_applications",
+          "columnsFrom": [
+            "application_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "hollo_posts_reply_target_id_hollo_posts_id_fk": {
+          "name": "hollo_posts_reply_target_id_hollo_posts_id_fk",
+          "tableFrom": "hollo_posts",
+          "tableTo": "hollo_posts",
+          "columnsFrom": [
+            "reply_target_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "hollo_posts_sharing_id_hollo_posts_id_fk": {
+          "name": "hollo_posts_sharing_id_hollo_posts_id_fk",
+          "tableFrom": "hollo_posts",
+          "tableTo": "hollo_posts",
+          "columnsFrom": [
+            "sharing_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "hollo_posts_quote_target_id_hollo_posts_id_fk": {
+          "name": "hollo_posts_quote_target_id_hollo_posts_id_fk",
+          "tableFrom": "hollo_posts",
+          "tableTo": "hollo_posts",
+          "columnsFrom": [
+            "quote_target_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "hollo_posts_poll_id_hollo_polls_id_fk": {
+          "name": "hollo_posts_poll_id_hollo_polls_id_fk",
+          "tableFrom": "hollo_posts",
+          "tableTo": "hollo_polls",
+          "columnsFrom": [
+            "poll_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "hollo_posts_iri_unique": {
+          "name": "hollo_posts_iri_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "iri"
+          ]
+        },
+        "posts_id_actor_id_unique": {
+          "name": "posts_id_actor_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "actor_id"
+          ]
+        },
+        "hollo_posts_poll_id_unique": {
+          "name": "hollo_posts_poll_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "poll_id"
+          ]
+        }
+      }
+    },
+    "public.porpoise_circuits": {
+      "name": "porpoise_circuits",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "used_titles": {
+          "name": "used_titles",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "wikipedia_page_id": {
+          "name": "wikipedia_page_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "locality": {
+          "name": "locality",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "country": {
+          "name": "country",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "timezone": {
+          "name": "timezone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "utc_offset": {
+          "name": "utc_offset",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lon": {
+          "name": "lon",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lat": {
+          "name": "lat",
+          "type": "real",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp (3)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp (3)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "porpoise_circuits_title_unique": {
+          "name": "porpoise_circuits_title_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "title"
+          ]
+        },
+        "porpoise_circuits_wikipedia_page_id_unique": {
+          "name": "porpoise_circuits_wikipedia_page_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "wikipedia_page_id"
+          ]
+        }
+      }
+    },
+    "public.porpoise_rounds": {
+      "name": "porpoise_rounds",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "number": {
+          "name": "number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "season": {
+          "name": "season",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "link": {
+          "name": "link",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "start": {
+          "name": "start",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "end": {
+          "name": "end",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "circuit_id": {
+          "name": "circuit_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "series": {
+          "name": "series",
+          "type": "series",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp (3)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp (3)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "porpoise_rounds_circuit_id_porpoise_circuits_id_fk": {
+          "name": "porpoise_rounds_circuit_id_porpoise_circuits_id_fk",
+          "tableFrom": "porpoise_rounds",
+          "tableTo": "porpoise_circuits",
+          "columnsFrom": [
+            "circuit_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "set null"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "public.porpoise_sessions": {
+      "name": "porpoise_sessions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "number": {
+          "name": "number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "start": {
+          "name": "start",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "end": {
+          "name": "end",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "round_id": {
+          "name": "round_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "session_types",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp (3)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp (3)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "porpoise_sessions_round_id_porpoise_rounds_id_fk": {
+          "name": "porpoise_sessions_round_id_porpoise_rounds_id_fk",
+          "tableFrom": "porpoise_sessions",
+          "tableTo": "porpoise_rounds",
+          "columnsFrom": [
+            "round_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    }
+  },
+  "enums": {
+    "public.account_type": {
+      "name": "account_type",
+      "schema": "public",
+      "values": [
+        "Application",
+        "Group",
+        "Organization",
+        "Person",
+        "Service"
+      ]
+    },
+    "public.grant_type": {
+      "name": "grant_type",
+      "schema": "public",
+      "values": [
+        "authorization_code",
+        "client_credentials"
+      ]
+    },
+    "public.list_replies_policy": {
+      "name": "list_replies_policy",
+      "schema": "public",
+      "values": [
+        "followed",
+        "list",
+        "none"
+      ]
+    },
+    "public.marker_type": {
+      "name": "marker_type",
+      "schema": "public",
+      "values": [
+        "notifications",
+        "home"
+      ]
+    },
+    "public.post_type": {
+      "name": "post_type",
+      "schema": "public",
+      "values": [
+        "Article",
+        "Note",
+        "Question"
+      ]
+    },
+    "public.post_visibility": {
+      "name": "post_visibility",
+      "schema": "public",
+      "values": [
+        "public",
+        "unlisted",
+        "private",
+        "direct"
+      ]
+    },
+    "public.scope": {
+      "name": "scope",
+      "schema": "public",
+      "values": [
+        "read",
+        "read:accounts",
+        "read:blocks",
+        "read:bookmarks",
+        "read:favourites",
+        "read:filters",
+        "read:follows",
+        "read:lists",
+        "read:mutes",
+        "read:notifications",
+        "read:search",
+        "read:statuses",
+        "write",
+        "write:accounts",
+        "write:blocks",
+        "write:bookmarks",
+        "write:conversations",
+        "write:favourites",
+        "write:filters",
+        "write:follows",
+        "write:lists",
+        "write:media",
+        "write:mutes",
+        "write:notifications",
+        "write:reports",
+        "write:statuses",
+        "follow",
+        "push"
+      ]
+    },
+    "public.series": {
+      "name": "series",
+      "schema": "public",
+      "values": [
+        "F1",
+        "F2",
+        "F3",
+        "FE",
+        "INDY",
+        "NXT",
+        "WEC",
+        "WRC",
+        "F1A"
+      ]
+    },
+    "public.session_types": {
+      "name": "session_types",
+      "schema": "public",
+      "values": [
+        "R",
+        "S",
+        "SQ",
+        "Q",
+        "FP",
+        "T",
+        "TBC",
+        "W"
+      ]
+    }
+  },
+  "schemas": {},
+  "sequences": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

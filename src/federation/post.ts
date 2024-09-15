@@ -11,8 +11,12 @@ import {
   Note,
   PUBLIC_COLLECTION,
   Question,
+  type Recipient,
+  Source,
+  Tombstone,
   Update,
   isActor,
+  lookupObject,
 } from "@fedify/fedify";
 import * as vocab from "@fedify/fedify/vocab";
 import { getLogger } from "@logtape/logtape";
@@ -28,7 +32,6 @@ import {
 } from "drizzle-orm";
 import type { PgDatabase } from "drizzle-orm/pg-core";
 import type { PostgresJsQueryResultHKT } from "drizzle-orm/postgres-js";
-import type MeiliSearch from "meilisearch";
 import sharp from "sharp";
 // @ts-ignore: No type definitions available
 import { isSSRFSafeURL } from "ssrfcheck";
@@ -68,7 +71,6 @@ export async function persistPost(
     typeof schema,
     ExtractTablesWithRelations<typeof schema>
   >,
-  search: MeiliSearch,
   object: Article | Note | Question,
   options: {
     contextLoader?: DocumentLoader;
@@ -83,7 +85,7 @@ export async function persistPost(
   const account =
     options?.account != null && options.account.iri === actor.id?.href
       ? options.account
-      : await persistAccount(db, search, actor, options);
+      : await persistAccount(db, actor, options);
   logger.debug("Persisted account: {account}", { account });
   if (account == null) return null;
   let replyTargetId: string | null = null;
@@ -101,17 +103,44 @@ export async function persistPost(
     } else {
       logger.debug("Persisting the reply target...");
       const replyTarget = await object.getReplyTarget();
-      if (replyTarget instanceof Note || replyTarget instanceof Article) {
-        const replyTargetObj = await persistPost(
-          db,
-          search,
-          replyTarget,
-          options,
-        );
+      if (
+        replyTarget instanceof Note ||
+        replyTarget instanceof Article ||
+        replyTarget instanceof Question
+      ) {
+        const replyTargetObj = await persistPost(db, replyTarget, options);
         logger.debug("Persisted the reply target: {replyTarget}", {
           replyTarget: replyTargetObj,
         });
         replyTargetId = replyTargetObj?.id ?? null;
+      }
+    }
+  }
+  let quoteTargetId: string | null = null;
+  if (object.quoteUrl != null) {
+    const result = await db
+      .select({ id: posts.id })
+      .from(posts)
+      .where(eq(posts.iri, object.quoteUrl.href))
+      .limit(1);
+    if (result != null && result.length > 0) {
+      quoteTargetId = result[0].id;
+      logger.debug("The quote target is already persisted: {quoteTargetId}", {
+        quoteTargetId,
+      });
+    } else {
+      logger.debug("Persisting the quote target...");
+      const quoteTarget = await lookupObject(object.quoteUrl, options);
+      if (
+        quoteTarget instanceof Note ||
+        quoteTarget instanceof Article ||
+        quoteTarget instanceof Question
+      ) {
+        const quoteTargetObj = await persistPost(db, quoteTarget, options);
+        logger.debug("Persisted the quote target: {quoteTarget}", {
+          quoteTarget: quoteTargetObj,
+        });
+        quoteTargetId = quoteTargetObj?.id ?? null;
       }
     }
   }
@@ -140,6 +169,7 @@ export async function persistPost(
     applicationId: null,
     replyTargetId,
     sharingId: null,
+    quoteTargetId: quoteTargetId,
     visibility: to.has(PUBLIC_COLLECTION.href)
       ? "public"
       : cc.has(PUBLIC_COLLECTION.href)
@@ -260,12 +290,7 @@ export async function persistPost(
   await db.delete(mentions).where(eq(mentions.postId, post.id));
   for await (const tag of object.getTags(options)) {
     if (tag instanceof vocab.Mention && tag.name != null && tag.href != null) {
-      const account = await persistAccountByIri(
-        db,
-        search,
-        tag.href.href,
-        options,
-      );
+      const account = await persistAccountByIri(db, tag.href.href, options);
       if (account == null) continue;
       await db.insert(mentions).values({
         accountId: account.id,
@@ -326,7 +351,6 @@ export async function persistPost(
     where: eq(posts.iri, object.id.href),
     with: { account: true, media: true },
   });
-  await search.index("posts").addDocuments([post!], { primaryKey: "id" });
   return post!;
 }
 
@@ -336,7 +360,6 @@ export async function persistSharingPost(
     typeof schema,
     ExtractTablesWithRelations<typeof schema>
   >,
-  search: MeiliSearch,
   announce: Announce,
   object: Article | Note,
   options: {
@@ -347,9 +370,9 @@ export async function persistSharingPost(
   if (announce.id == null) return null;
   const actor = await announce.getActor(options);
   if (actor == null) return null;
-  const account = await persistAccount(db, search, actor, options);
+  const account = await persistAccount(db, actor, options);
   if (account == null) return null;
-  const originalPost = await persistPost(db, search, object, options);
+  const originalPost = await persistPost(db, object, options);
   if (originalPost == null) return null;
   const id = uuidv7();
   const updated = new Date();
@@ -363,6 +386,7 @@ export async function persistSharingPost(
       applicationId: null,
       replyTargetId: null,
       sharingId: originalPost.id,
+      quoteTargetId: null,
       visibility: announce.toIds
         .map((iri) => iri.href)
         .includes(PUBLIC_COLLECTION.href)
@@ -388,7 +412,6 @@ export async function persistPollVote(
     typeof schema,
     ExtractTablesWithRelations<typeof schema>
   >,
-  search: MeiliSearch,
   object: Note,
   options: {
     contextLoader?: DocumentLoader;
@@ -418,7 +441,6 @@ export async function persistPollVote(
   if (poll == null) return null;
   const voter = await persistAccountByIri(
     db,
-    search,
     object.attributionId.href,
     options,
   );
@@ -525,6 +547,7 @@ export function toObject(
   post: Post & {
     account: Account & { owner: AccountOwner | null };
     replyTarget: Post | null;
+    quoteTarget: Post | null;
     media: Medium[];
     poll: (Poll & { options: PollOption[] }) | null;
     mentions: (Mention & { account: Account })[];
@@ -579,6 +602,13 @@ export function toObject(
               post.contentHtml,
               new LanguageString(post.contentHtml, post.language),
             ],
+    source:
+      post.content == null
+        ? null
+        : new Source({
+            content: post.content,
+            mediaType: "text/markdown",
+          }),
     sensitive: post.sensitive,
     tags: [
       ...post.mentions.map(
@@ -608,6 +638,7 @@ export function toObject(
           height: medium.height,
         }),
     ),
+    quoteUrl: post.quoteTarget == null ? null : new URL(post.quoteTarget.iri),
     published: toTemporalInstant(post.published),
     url: post.url ? new URL(post.url) : null,
     updated: toTemporalInstant(
@@ -632,6 +663,7 @@ export function toCreate(
   post: Post & {
     account: Account & { owner: AccountOwner | null };
     replyTarget: Post | null;
+    quoteTarget: Post | null;
     media: Medium[];
     poll: (Poll & { options: PollOption[] }) | null;
     mentions: (Mention & { account: Account })[];
@@ -653,6 +685,7 @@ export function toUpdate(
   post: Post & {
     account: Account & { owner: AccountOwner | null };
     replyTarget: Post | null;
+    quoteTarget: Post | null;
     media: Medium[];
     poll: (Poll & { options: PollOption[] }) | null;
     mentions: (Mention & { account: Account })[];
@@ -674,6 +707,29 @@ export function toUpdate(
   });
 }
 
+export function toDelete(
+  post: Post & {
+    account: Account & { owner: AccountOwner | null };
+    replyTarget: Post | null;
+    quoteTarget: Post | null;
+    media: Medium[];
+    poll: (Poll & { options: PollOption[] }) | null;
+    mentions: (Mention & { account: Account })[];
+  },
+  ctx: Context<unknown>,
+  deleted: Date = new Date(),
+) {
+  const object = toObject(post, ctx);
+  return new Update({
+    id: new URL(`#delete-${deleted.toString()}`, object.id!),
+    actor: object.attributionId,
+    tos: object.toIds,
+    ccs: object.ccIds,
+    object: new Tombstone({ id: object.id }),
+    published: object.updated,
+  });
+}
+
 export function toAnnounce(
   post: Post & {
     account: Account;
@@ -682,6 +738,7 @@ export function toAnnounce(
   ctx: Context<unknown>,
 ): Announce {
   if (post.sharing == null) throw new Error("The post is not shared");
+  if (post.visibility === "direct") throw new Error("Disallowed sharing");
   const handle = post.account.handle.replaceAll(/(?:^@)|(?:@[^@]+$)/g, "");
   return new vocab.Announce({
     id: new URL("#activity", post.iri),
@@ -692,16 +749,27 @@ export function toAnnounce(
       post.visibility === "public"
         ? vocab.PUBLIC_COLLECTION
         : ctx.getFollowersUri(handle),
-    ccs: [
-      new URL(post.sharing.account.iri),
-      ...(post.visibility === "private"
+    ccs:
+      post.visibility === "private"
         ? []
         : [
             post.visibility === "public"
               ? ctx.getFollowersUri(handle)
               : vocab.PUBLIC_COLLECTION,
             new URL(post.sharing.account.iri),
-          ]),
-    ],
+          ],
   });
+}
+
+export function getRecipients(
+  post: Post & { mentions: (Mention & { account: Account })[] },
+): Recipient[] {
+  return post.mentions.map((m) => ({
+    id: new URL(m.account.iri),
+    inboxId: new URL(m.account.inboxUrl),
+    endpoints:
+      m.account.sharedInboxUrl == null
+        ? null
+        : { sharedInbox: new URL(m.account.sharedInboxUrl) },
+  }));
 }
