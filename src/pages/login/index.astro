@@ -1,0 +1,77 @@
+---
+import { verify } from "@stdext/crypto/hash";
+import { eq } from "drizzle-orm";
+import LoginForm from "../../components/LoginForm.astro";
+import { db } from "../../db";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { credentials } from "../../schema.ts";
+
+let next: string | undefined = undefined;
+let values:
+  | {
+      email?: string;
+    }
+  | undefined;
+let errors:
+  | {
+      email?: string;
+      password?: string;
+    }
+  | undefined;
+
+if (Astro.request.method === "POST") {
+  const form = await Astro.request.formData();
+  const email = form.get("email")?.toString();
+  const password = form.get("password")?.toString();
+  next = form.get("next")?.toString();
+
+  if (!email || !password) {
+    values = { email };
+    errors = {
+      email: !email ? "Email is required." : undefined,
+      password: !password ? "Password is required." : undefined,
+    };
+
+    Astro.response.status = 400;
+    return;
+  }
+
+  const credential = await db.query.credentials.findFirst({
+    where: eq(credentials.email, email),
+  });
+
+  if (
+    credential == null ||
+    !verify("argon2", password, credential.passwordHash)
+  ) {
+    values = { email };
+    errors = {
+      email: "Invalid email or password.",
+      password: "Invalid email or password.",
+    };
+
+    Astro.response.status = 400;
+    return;
+  }
+
+  Astro.cookies.set("login", new Date().toISOString(), { path: "/" });
+
+  return Astro.redirect(next ?? "/");
+}
+---
+
+
+<BaseLayout title="Sign in to Hollo">
+  <hgroup>
+    <h1>Sign in to Hollo</h1>
+    <p>To continue, sign in with your Hollo account.</p>
+  </hgroup>
+  <LoginForm
+    action="/login"
+    next={next}
+    values={values}
+    errors={errors}
+  />
+</BaseLayout>
+
+    

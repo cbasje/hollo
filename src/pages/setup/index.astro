@@ -1,0 +1,71 @@
+---
+import { hash } from "@stdext/crypto/hash";
+import { count } from "drizzle-orm";
+import SetupForm from "../../components/SetupForm.astro";
+import { db } from "../../db";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { credentials } from "../../schema.ts";
+
+let values:
+  | {
+      email?: string;
+    }
+  | undefined;
+let errors:
+  | {
+      email?: string;
+      password?: string;
+      passwordConfirm?: string;
+    }
+  | undefined;
+
+const [{ value: exist }] = await db
+  .select({ value: count() })
+  .from(credentials);
+if (exist > 0) return Astro.redirect("/accounts");
+
+if (Astro.request.method === "POST") {
+  const form = await Astro.request.formData();
+  const email = form.get("email")?.toString();
+  const password = form.get("password")?.toString();
+  const passwordConfirm = form.get("password_confirm")?.toString();
+
+  if (
+    email == null ||
+    password == null ||
+    passwordConfirm == null ||
+    password !== passwordConfirm
+  ) {
+    values = { email };
+    errors = {
+      email: email == null ? "Email is required." : undefined,
+      password: password == null ? "Password is required." : undefined,
+      passwordConfirm:
+        password !== passwordConfirm ? "Passwords do not match." : undefined,
+    };
+
+    Astro.response.status = 400;
+    return;
+  }
+
+  await db.insert(credentials).values({
+    email,
+    passwordHash: hash("argon2", password),
+  });
+
+  return Astro.redirect("/accounts");
+}
+---
+
+
+
+<BaseLayout title="Welcome to Hollo!">
+  <hgroup>
+    <h1>Welcome to Hollo!</h1>
+    <p>
+      It's the first time to use Hollo, let's set up your account. The email
+      and password you set here will be used to sign in to Hollo.
+    </p>
+  </hgroup>
+  <SetupForm action="/setup" values={values} errors={errors} />
+</BaseLayout>

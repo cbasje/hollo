@@ -5,8 +5,8 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { createMiddleware } from "hono/factory";
 import { z } from "zod";
-import { Layout } from "./components/Layout";
 import { db } from "./db";
+import { Layout } from "./layouts/OAuthLayout.tsx";
 import { loginRequired } from "./login";
 import {
   type AccessToken,

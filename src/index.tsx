@@ -2,14 +2,12 @@ import { federation as honoFedifyMiddleware } from "@fedify/fedify/x/hono";
 import { Hono } from "hono";
 import { serveStatic } from "hono/bun";
 import { behindProxy } from "x-forwarded-fetch";
-import accounts from "./accounts";
 import api from "./api";
 import federation from "./federation";
 import hunter from "./hunter";
 import image from "./image";
 import oauth from "./oauth";
 import "./logging";
-import pages from "./pages";
 
 export type EnvVariables = {
   PUBLIC_MAP_API_KEY: string;
@@ -40,9 +38,6 @@ try {
 app.route("/hunter", hunter);
 
 // Add rest routes
-app.route("/setup", setup);
-app.route("/login", login);
-app.route("/accounts", accounts);
 app.route("/oauth", oauth);
 app.route("/api", api);
 app.route("/image", image);

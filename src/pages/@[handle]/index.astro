@@ -7,7 +7,6 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 import { accountOwners, featuredTags, pinnedPosts, posts } from "../../schema";
 
 let { handle } = Astro.params;
-console.log("handle", handle);
 if (handle == null) return new Response(undefined, { status: 404 });
 
 if (handle.startsWith("@")) handle = handle.substring(1);
@@ -34,11 +33,28 @@ const postList = await db.query.posts.findMany({
         media: true,
         poll: { with: { options: true } },
         replyTarget: { with: { account: true } },
+        quoteTarget: {
+          with: {
+            account: true,
+            media: true,
+            poll: { with: { options: true } },
+            replyTarget: { with: { account: true } },
+          },
+        },
       },
     },
     replyTarget: { with: { account: true } },
+    quoteTarget: {
+      with: {
+        account: true,
+        media: true,
+        poll: { with: { options: true } },
+        replyTarget: { with: { account: true } },
+      },
+    },
   },
 });
+
 const pinnedPostList = await db.query.pinnedPosts.findMany({
   where: and(eq(pinnedPosts.accountId, owner.id)),
   orderBy: desc(pinnedPosts.index),
@@ -54,13 +70,30 @@ const pinnedPostList = await db.query.pinnedPosts.findMany({
             media: true,
             poll: { with: { options: true } },
             replyTarget: { with: { account: true } },
+            quoteTarget: {
+              with: {
+                account: true,
+                media: true,
+                poll: { with: { options: true } },
+                replyTarget: { with: { account: true } },
+              },
+            },
           },
         },
         replyTarget: { with: { account: true } },
+        quoteTarget: {
+          with: {
+            account: true,
+            media: true,
+            poll: { with: { options: true } },
+            replyTarget: { with: { account: true } },
+          },
+        },
       },
     },
   },
 });
+
 const featuredTagList = await db.query.featuredTags.findMany({
   where: eq(featuredTags.accountOwnerId, owner.id),
 });

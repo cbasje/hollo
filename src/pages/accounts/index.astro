@@ -1,0 +1,22 @@
+---
+import AccountList from "../../components/AccountList.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+// TODO: accountsPage.use(loginRequired);
+---
+
+<BaseLayout title="Hollo: Accounts">
+    <hgroup>
+      <h1>Accounts</h1>
+      <p>
+        You can have more than one account. Each account have its own handle,
+        settings, and data, and you can switch between them at any time.
+      </p>
+    </hgroup>
+
+    <AccountList />
+
+    <a role="button" href="/accounts/new">
+      Create a new account
+    </a>
+</BaseLayout>

@@ -1,42 +1,65 @@
 ---
+import xss from "xss";
 import db from "../db";
-
-const { host } = Astro.url;
 
 const owners = await db.query.accountOwners.findMany({
   with: { account: true },
 });
-if (owners.length < 1) return Astro.redirect("/accounts");
 ---
 
-<hgroup>
-    <h1>{host}</h1>
-    <p>This Hollo instance has the below accounts.</p>
-</hgroup>
-
 {
-    owners.map((owner) => (
+    owners.map(({account}) => (
         <article>
-            <hgroup>
-                {owner.account.avatarUrl && (
-                    <a href={owner.account.url ?? owner.account.iri}>
-                        <img
-                            src={owner.account.avatarUrl}
-                            alt={`${owner.account.name}'s avatar`}
-                            width={72}
-                            height={72}
-                            style="float: left; margin-right: 1em;"
-                        />
-                    </a>
-                )}
-                <h3>
-                    <a href={owner.account.url ?? owner.account.iri}>
-                        {owner.account.name}
-                    </a>
-                </h3>
-                <p style="user-select: all;">{owner.account.handle}</p>
-            </hgroup>
-            <div set:html={owner.account.bioHtml ?? ""} />
+            <header>
+                <hgroup>
+                    <h2>{account.name}</h2>
+                    <p style="user-select: all;">{account.handle}</p>
+                </hgroup>
+            </header>
+
+            <div set:html={{ __html: xss(account.bioHtml ?? "") }} />
+          
+            <p>
+              {account.published ? (
+                <small>
+                  Created at{" "}
+                  <time datetime={account.published.toISOString()}>
+                    {account.published.toLocaleDateString()}
+                  </time>
+                  .
+                </small>
+              ) : (
+                <small>
+                  Fetched at{" "}
+                  <time datetime={account.updated.toISOString()}>
+                    {account.updated.toLocaleDateString()}
+                  </time>
+                  .
+                </small>
+              )}
+            </p>
+            <footer>
+                <form
+                    class="grid"
+                    action={`/accounts/${account.id}/delete`}
+                    method="post"
+                    onsubmit="return confirm('Are you sure you want to delete this account?')"
+                >
+                  <div>
+                      <a
+                          href={`/accounts/${account.id}`}
+                          role="button"
+                          class="contrast"
+                          style="display: block;"
+                      >
+                          Edit
+                      </a>
+                  </div>
+                  <button type="submit" class="contrast">
+                      Delete
+                  </button>
+                </form>
+            </footer>
         </article>
     ))
 }

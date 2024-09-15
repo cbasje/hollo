@@ -1,0 +1,120 @@
+---
+import { eq } from "drizzle-orm";
+import AccountForm from "../../components/AccountForm.astro";
+import db from "../../db";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { accountOwners, accounts, type PostVisibility } from "../../schema";
+import { formatText } from "../../text";
+import { Update } from "@fedify/fedify";
+
+let values:
+  | {
+      username?: string;
+      name?: string;
+      bio?: string;
+      protected?: boolean;
+      language?: string;
+      visibility?: PostVisibility;
+    }
+  | undefined;
+let errors:
+  | {
+      username?: string;
+      name?: string;
+      bio?: string;
+    }
+  | undefined;
+
+const { id: accountId } = Astro.params;
+if (accountId == null) return new Response(undefined, { status: 404 });
+
+const owner = await db.query.accountOwners.findFirst({
+  where: eq(accountOwners.id, accountId),
+  with: { account: true },
+});
+if (owner == null) return new Response(undefined, { status: 404 });
+
+const username = owner.account.handle.replace(/@[^@]+$/, "");
+
+if (Astro.request.method === "POST") {
+  const form = await Astro.request.formData();
+  const name = form.get("name")?.toString()?.trim();
+  const bio = form.get("bio")?.toString()?.trim();
+  const protected_ = form.get("protected") != null;
+  const language = form.get("language")?.toString()?.trim();
+  const visibility = form
+    .get("visibility")
+    ?.toString()
+    ?.trim() as PostVisibility;
+  if (name == null || name === "") {
+    values = {
+      name,
+      bio,
+      protected: protected_,
+      language,
+      visibility,
+    };
+    errors = {
+      name: name == null || name === "" ? "Display name is required." : "",
+    };
+
+    Astro.response.status = 400;
+    return;
+  }
+  const fedCtx = federation.createContext(c.req.raw, undefined);
+  const fmtOpts = {
+    url: fedCtx.url,
+    contextLoader: fedCtx.contextLoader,
+    documentLoader: await fedCtx.getDocumentLoader(owner),
+  };
+
+  await db.transaction(async (tx) => {
+    await tx
+      .update(accounts)
+      .set({
+        name,
+        bioHtml: (await formatText(tx, bio ?? "", fmtOpts)).html,
+        protected: protected_,
+      })
+      .where(eq(accounts.id, accountId));
+    await tx
+      .update(accountOwners)
+      .set({ bio, language, visibility })
+      .where(eq(accountOwners.id, accountId));
+  });
+
+  await fedCtx.sendActivity(
+    { handle: owner.handle },
+    "followers",
+    new Update({
+      actor: fedCtx.getActorUri(owner.handle),
+      object: await fedCtx.getActor(owner.handle),
+    }),
+    { preferSharedInbox: true },
+  );
+
+  return Astro.redirect("/accounts");
+}
+---
+
+<BaseLayout title="Hollo: New account">
+  <hgroup>
+    <h1>Edit {username}</h1>
+    <p>You can edit your account by filling out the form below.</p>
+  </hgroup>
+  <AccountForm
+    action={`/accounts/${owner.account.id}`}
+    readOnly={{ username: true }}
+    values={{
+      username: username.replace(/^@/, ""),
+      name: values?.name ?? owner.account.name,
+      bio: values?.bio ?? owner.bio ?? undefined,
+      protected:
+        values?.protected ?? owner.account.protected,
+      language: values?.language ?? owner.language,
+      visibility: values?.visibility ?? owner.visibility,
+    }}
+    errors={errors}
+    submitLabel="Save changes"
+  />
+</BaseLayout>
