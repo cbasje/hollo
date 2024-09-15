@@ -50,7 +50,6 @@ import {
   pollOptions,
   posts,
 } from "../schema";
-import { search } from "../search";
 import { persistAccount, updateAccountStats } from "./account";
 import { toTemporalInstant } from "./date";
 import {
@@ -246,6 +245,7 @@ federation
       with: {
         account: { with: { owner: true } },
         replyTarget: true,
+        quoteTarget: true,
         media: true,
         poll: { with: { options: true } },
         mentions: { with: { account: true } },
@@ -333,6 +333,7 @@ federation.setFeaturedDispatcher("/@{handle}/pinned", async (ctx, handle) => {
         with: {
           account: { with: { owner: true } },
           replyTarget: true,
+          quoteTarget: true,
           media: true,
           poll: { with: { options: { orderBy: pollOptions.index } } },
           mentions: { with: { account: true } },
@@ -392,7 +393,7 @@ federation
       inboxLogger.debug("Invalid following: {following}", { following });
       return;
     }
-    const follower = await persistAccount(db, search, actor, ctx);
+    const follower = await persistAccount(db, actor, ctx);
     if (follower == null) return;
     await db
       .insert(follows)
@@ -425,7 +426,7 @@ federation
       inboxLogger.debug("Invalid actor: {actor}", { actor });
       return;
     }
-    const account = await persistAccount(db, search, actor, ctx);
+    const account = await persistAccount(db, actor, ctx);
     if (account == null) return;
     if (accept.objectId != null) {
       const updated = await db
@@ -470,7 +471,7 @@ federation
       inboxLogger.debug("Invalid actor: {actor}", { actor });
       return;
     }
-    const account = await persistAccount(db, search, actor, ctx);
+    const account = await persistAccount(db, actor, ctx);
     if (account == null) return;
     if (reject.objectId != null) {
       const deleted = await db
@@ -516,13 +517,14 @@ federation
       object.name != null
     ) {
       const vote = await db.transaction((tx) =>
-        persistPollVote(tx, search, object, ctx),
+        persistPollVote(tx, object, ctx),
       );
       if (vote == null) return;
       const post = await db.query.posts.findFirst({
         with: {
           account: { with: { owner: true } },
           replyTarget: true,
+          quoteTarget: true,
           media: true,
           poll: {
             with: {
@@ -555,7 +557,7 @@ federation
       object instanceof Question
     ) {
       await db.transaction(async (tx) => {
-        const post = await persistPost(tx, search, object, ctx);
+        const post = await persistPost(tx, object, ctx);
         if (post?.replyTargetId != null) {
           await updatePostStats(tx, { id: post.replyTargetId });
         }
@@ -575,7 +577,7 @@ federation
     ) {
       const actor = await like.getActor();
       if (actor == null) return;
-      const account = await persistAccount(db, search, actor, ctx);
+      const account = await persistAccount(db, actor, ctx);
       if (account == null) return;
       // biome-ignore lint/complexity/useLiteralKeys: tsc complains about this (TS4111)
       const postId = parsed.values["id"];
@@ -595,13 +597,7 @@ federation
     const object = await announce.getObject();
     if (object instanceof Article || object instanceof Note) {
       await db.transaction(async (tx) => {
-        const post = await persistSharingPost(
-          tx,
-          search,
-          announce,
-          object,
-          ctx,
-        );
+        const post = await persistSharingPost(tx, announce, object, ctx);
         if (post?.sharingId != null) {
           await updatePostStats(tx, { id: post.sharingId });
         }
@@ -613,9 +609,9 @@ federation
   .on(Update, async (ctx, update) => {
     const object = await update.getObject();
     if (isActor(object)) {
-      await persistAccount(db, search, object, ctx);
+      await persistAccount(db, object, ctx);
     } else if (object instanceof Article || object instanceof Note) {
-      await persistPost(db, search, object, ctx);
+      await persistPost(db, object, ctx);
     } else {
       inboxLogger.debug("Unsupported object on Update: {object}", { object });
     }
@@ -652,7 +648,7 @@ federation
     const object = await add.getObject();
     if (object instanceof Note || object instanceof Article) {
       await db.transaction(async (tx) => {
-        const post = await persistPost(tx, search, object, ctx);
+        const post = await persistPost(tx, object, ctx);
         if (post == null) return;
         for (const account of accountList) {
           await tx.insert(pinnedPosts).values({
@@ -671,7 +667,7 @@ federation
     const object = await remove.getObject();
     if (object instanceof Note || object instanceof Article) {
       await db.transaction(async (tx) => {
-        const post = await persistPost(tx, search, object, ctx);
+        const post = await persistPost(tx, object, ctx);
         if (post == null) return;
         for (const account of accountList) {
           await tx
@@ -701,7 +697,7 @@ federation
         inboxLogger.debug("Invalid actor: {actor}", { actor });
         return;
       }
-      const account = await persistAccount(db, search, actor, ctx);
+      const account = await persistAccount(db, actor, ctx);
       if (account == null) return;
       const deleted = await db
         .delete(follows)
@@ -727,7 +723,7 @@ federation
       ) {
         const actor = await like.getActor();
         if (actor == null) return;
-        const account = await persistAccount(db, search, actor, ctx);
+        const account = await persistAccount(db, actor, ctx);
         if (account == null) return;
         // biome-ignore lint/complexity/useLiteralKeys: tsc complains about this (TS4111)
         const postId = parsed.values["id"];
@@ -790,6 +786,7 @@ federation.setObjectDispatcher(Note, "/@{handle}/{id}", async (ctx, values) => {
     with: {
       account: { with: { owner: true } },
       replyTarget: true,
+      quoteTarget: true,
       media: true,
       poll: { with: { options: { orderBy: pollOptions.index } } },
       mentions: { with: { account: true } },

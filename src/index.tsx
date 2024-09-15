@@ -7,10 +7,9 @@ import api from "./api";
 import federation from "./federation";
 import hunter from "./hunter";
 import image from "./image";
-import "./logging";
-import login from "./login";
 import oauth from "./oauth";
-import setup from "./setup";
+import "./logging";
+import pages from "./pages";
 
 export type EnvVariables = {
   PUBLIC_MAP_API_KEY: string;

@@ -21,7 +21,6 @@ import {
 } from "drizzle-orm";
 import type { PgDatabase } from "drizzle-orm/pg-core";
 import type { PostgresJsQueryResultHKT } from "drizzle-orm/postgres-js";
-import type MeiliSearch from "meilisearch";
 import { uuidv7 } from "uuidv7-js";
 import * as schema from "../schema";
 import type { NewPinnedPost, Post } from "../schema";
@@ -35,7 +34,6 @@ export async function persistAccount(
     typeof schema,
     ExtractTablesWithRelations<typeof schema>
   >,
-  search: MeiliSearch,
   actor: Actor,
   options: {
     contextLoader?: DocumentLoader;
@@ -107,13 +105,12 @@ export async function persistAccount(
     where: eq(schema.accounts.iri, actor.id.href),
   });
   if (account == null) return null;
-  await search.index("accounts").addDocuments([account], { primaryKey: "id" });
   const featuredCollection = await actor.getFeatured(opts);
   if (featuredCollection != null) {
     const posts: Post[] = [];
     for await (const item of iterateCollection(featuredCollection, opts)) {
       if (item instanceof Note || item instanceof Article) {
-        const post = await persistPost(db, search, item, {
+        const post = await persistPost(db, item, {
           ...options,
           account,
         });
@@ -140,7 +137,6 @@ export async function persistAccountByIri(
     typeof schema,
     ExtractTablesWithRelations<typeof schema>
   >,
-  search: MeiliSearch,
   iri: string,
   options: {
     contextLoader?: DocumentLoader;
@@ -153,7 +149,7 @@ export async function persistAccountByIri(
   if (account != null) return account;
   const actor = await lookupObject(iri, options);
   if (!isActor(actor) || actor.id == null) return null;
-  return await persistAccount(db, search, actor, options);
+  return await persistAccount(db, actor, options);
 }
 
 export async function updateAccountStats(

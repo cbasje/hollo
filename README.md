@@ -12,35 +12,36 @@ Mastodon, Misskey, and so on.
 
 ## Current features and roadmap
 
--   [x] Logging in
--   [x] Composing a post
--   [x] Editing a post
--   [x] Deleting a post
--   [x] Writing a reply
--   [x] View posts
--   [x] Post visibility
--   [x] Post language
--   [x] Pinned posts
--   [x] Mentions
--   [x] Hashtags
--   [x] Media attachments
--   [x] Polls
--   [x] Likes (favorites)
--   [x] Shares (reblogs)
--   [x] Editing profile
--   [x] Deleting account
--   [x] Public timeline
--   [x] Local timeline
--   [x] Lists
--   [ ] Trends
--   [x] Search
--   [x] Following/unfollowing accounts
--   [x] Following/unfollowing hashtags
--   [ ] Blocking accounts
--   [ ] Blocking domains
--   [ ] Muting accounts
--   [x] Notifications
--   [x] Bookmarks
--   [x] Markers
--   [x] Featured hashtags
--   [ ] Featured accounts
+- [x] Logging in
+- [x] Composing a post
+- [x] Editing a post
+- [x] Deleting a post
+- [x] Writing a reply
+- [x] View posts
+- [x] Post visibility
+- [x] Post language
+- [x] Pinned posts
+- [x] Mentions
+- [x] Hashtags
+- [x] Media attachments
+- [x] Polls
+- [x] Likes (favorites)
+- [x] Shares (reblogs)
+- [x] Quotes
+- [x] Editing profile
+- [x] Deleting account
+- [x] Public timeline
+- [x] Local timeline
+- [x] Lists
+- [ ] Trends
+- [x] Search
+- [x] Following/unfollowing accounts
+- [x] Following/unfollowing hashtags
+- [ ] Blocking accounts
+- [ ] Blocking domains
+- [ ] Muting accounts
+- [x] Notifications
+- [x] Bookmarks
+- [x] Markers
+- [x] Featured hashtags
+- [ ] Featured accounts

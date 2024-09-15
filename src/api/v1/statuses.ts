@@ -13,7 +13,14 @@ import {
 import { getPostRelations, serializePost } from "../../entities/status";
 import federation from "../../federation";
 import { updateAccountStats } from "../../federation/account";
-import { toAnnounce, toCreate, toUpdate } from "../../federation/post";
+import {
+  getRecipients,
+  persistPost,
+  toAnnounce,
+  toCreate,
+  toDelete,
+  toUpdate,
+} from "../../federation/post";
 import { type Variables, scopeRequired, tokenRequired } from "../../oauth";
 import { type PreviewCard, fetchPreviewCard } from "../../previewcard";
 import redis from "../../redis";
@@ -34,7 +41,6 @@ import {
   polls,
   posts,
 } from "../../schema";
-import search from "../../search";
 import { formatText } from "../../text";
 
 const app = new Hono<{ Variables: Variables }>();
@@ -70,6 +76,7 @@ app.post(
     statusSchema.merge(
       z.object({
         in_reply_to_id: z.string().uuid().optional(),
+        quote_id: z.string().uuid().optional(),
         visibility: z
           .enum(["public", "unlisted", "private", "direct"])
           .optional(),
@@ -109,13 +116,11 @@ app.post(
     const url = fedCtx.getObjectUri(Note, { handle, id });
     const published = new Date();
     const content =
-      data.status == null
-        ? null
-        : await formatText(db, search, data.status, fmtOpts);
+      data.status == null ? null : await formatText(db, data.status, fmtOpts);
     const summary =
       data.spoiler_text == null || data.spoiler_text.trim() === ""
         ? null
-        : await formatText(db, search, data.spoiler_text, fmtOpts);
+        : await formatText(db, data.spoiler_text, fmtOpts);
     const mentionedIds = [
       ...(content?.mentions ?? []),
       ...(summary?.mentions ?? []),
@@ -134,6 +139,12 @@ app.post(
     let previewCard: PreviewCard | null = null;
     if (content?.previewLink != null) {
       previewCard = await fetchPreviewCard(content.previewLink);
+    }
+    let quoteTargetId: string | null = null;
+    if (data.quote_id != null) quoteTargetId = data.quote_id;
+    else if (content?.quoteTarget != null) {
+      const quoted = await persistPost(db, content.quoteTarget, fmtOpts);
+      if (quoted != null) quoteTargetId = quoted.id;
     }
     await db.transaction(async (tx) => {
       let poll: Poll | null = null;
@@ -167,6 +178,7 @@ app.post(
         accountId: owner.id,
         applicationId: token.applicationId,
         replyTargetId: data.in_reply_to_id,
+        quoteTargetId,
         sharingId: null,
         visibility: data.visibility ?? owner.visibility,
         summary: data.spoiler_text,
@@ -214,29 +226,15 @@ app.post(
       await redis.expire(`idempotency:${idempotencyKey}`, 60 * 60);
     }
     const activity = toCreate(post, fedCtx);
-    if (post.visibility === "direct") {
-      await fedCtx.sendActivity(
-        { handle },
-        post.mentions.map((m) => ({
-          id: new URL(m.account.iri),
-          inboxId: new URL(m.account.inboxUrl),
-          endpoints:
-            m.account.sharedInboxUrl == null
-              ? null
-              : { sharedInbox: new URL(m.account.sharedInboxUrl) },
-        })),
-        activity,
-        {
-          excludeBaseUris: [new URL(c.req.url)],
-        },
-      );
-    } else {
+    await fedCtx.sendActivity({ handle }, getRecipients(post), activity, {
+      excludeBaseUris: [new URL(c.req.url)],
+    });
+    if (post.visibility !== "direct") {
       await fedCtx.sendActivity({ handle }, "followers", activity, {
         preferSharedInbox: true,
         excludeBaseUris: [new URL(c.req.url)],
       });
     }
-    await search.index("posts").addDocuments([post], { primaryKey: "id" });
     return c.json(serializePost(post, owner, c.req.url));
   },
 );
@@ -264,13 +262,11 @@ app.put(
       documentLoader: await fedCtx.getDocumentLoader(owner),
     };
     const content =
-      data.status == null
-        ? null
-        : await formatText(db, search, data.status, fmtOpts);
+      data.status == null ? null : await formatText(db, data.status, fmtOpts);
     const summary =
       data.spoiler_text == null || data.spoiler_text.trim() === ""
         ? null
-        : await formatText(db, search, data.spoiler_text, fmtOpts);
+        : await formatText(db, data.spoiler_text, fmtOpts);
     const hashtags = [
       ...(content?.hashtags ?? []),
       ...(summary?.hashtags ?? []),
@@ -322,11 +318,14 @@ app.put(
       where: eq(posts.id, id),
       with: getPostRelations(owner.id),
     });
-    await fedCtx.sendActivity(owner, "followers", toUpdate(post!, fedCtx), {
+    const activity = toUpdate(post!, fedCtx);
+    await fedCtx.sendActivity(owner, getRecipients(post!), activity, {
+      excludeBaseUris: [new URL(c.req.url)],
+    });
+    await fedCtx.sendActivity(owner, "followers", activity, {
       preferSharedInbox: true,
       excludeBaseUris: [new URL(c.req.url)],
     });
-    await search.index("posts").addDocuments([post!], { primaryKey: "id" });
     return c.json(serializePost(post!, owner, c.req.url));
   },
 );
@@ -368,22 +367,26 @@ app.delete(
       await updateAccountStats(tx, owner);
     });
     const fedCtx = federation.createContext(c.req.raw, undefined);
+    const activity = toDelete(post, fedCtx);
     await fedCtx.sendActivity(
       { handle: owner.handle },
-      "followers",
-      new vocab.Delete({
-        actor: new URL(owner.account.iri),
-        to: vocab.PUBLIC_COLLECTION,
-        object: new vocab.Tombstone({
-          id: new URL(post.iri),
-        }),
-      }),
+      getRecipients(post),
+      activity,
       {
-        preferSharedInbox: true,
         excludeBaseUris: [new URL(c.req.url)],
       },
     );
-    await search.index("posts").deleteDocument(post.id);
+    if (post.visibility !== "direct") {
+      await fedCtx.sendActivity(
+        { handle: owner.handle },
+        "followers",
+        activity,
+        {
+          preferSharedInbox: true,
+          excludeBaseUris: [new URL(c.req.url)],
+        },
+      );
+    }
     return c.json({
       ...serializePost(post, owner, c.req.url),
       text: post.content ?? "",

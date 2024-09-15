@@ -7,7 +7,8 @@ import {
   lookupObject,
 } from "@fedify/fedify";
 import { zValidator } from "@hono/zod-validator";
-import { desc, eq, inArray, or } from "drizzle-orm";
+import { getLogger } from "@logtape/logtape";
+import { and, desc, eq, ilike, inArray, or } from "drizzle-orm";
 import { Hono } from "hono";
 import { z } from "zod";
 import { db } from "../../db";
@@ -18,7 +19,6 @@ import { persistAccount } from "../../federation/account";
 import { persistPost } from "../../federation/post";
 import { type Variables, scopeRequired, tokenRequired } from "../../oauth";
 import { type Account, accounts, posts } from "../../schema";
-import search from "../../search";
 import { postMedia } from "../v1/media";
 import instance from "./instance";
 
@@ -53,6 +53,7 @@ app.get(
     }),
   ),
   async (c) => {
+    const logger = getLogger(["hollo", "api", "v2", "search"]);
     const owner = c.get("token").accountOwner;
     if (owner == null) return c.json({ error: "invalid_token" }, 401);
     const query = c.req.valid("query");
@@ -89,22 +90,19 @@ app.get(
     ) {
       try {
         resolved = await lookupObject(q, options);
-      } catch (e) {
-        if (!(e instanceof TypeError)) throw e;
+      } catch (error) {
+        if (!(error instanceof TypeError)) throw error;
+        logger.warn("Failed to resolve object: {error}", { error });
       }
     }
     if (query.type == null || query.type === "accounts") {
-      const { hits } = await search.index("accounts").search(q, {
+      const hits = await db.query.accounts.findMany({
+        where: ilike(accounts.handle, `%${q}%`),
         limit: query.limit,
         offset: query.offset,
       });
       if (isActor(resolved)) {
-        const resolvedAccount = await persistAccount(
-          db,
-          search,
-          resolved,
-          options,
-        );
+        const resolvedAccount = await persistAccount(db, resolved, options);
         if (resolvedAccount != null) hits.unshift(resolvedAccount);
       }
       for (const hit of hits) {
@@ -114,18 +112,24 @@ app.get(
       }
     }
     if (query.type == null || query.type === "statuses") {
-      const { hits } = await search.index("posts").search(q, {
+      let filter = ilike(posts.content, `%${q}%`);
+      if (query.account_id != null) {
+        filter = and(filter, eq(posts.accountId, query.account_id))!;
+      }
+      const hits = await db.query.posts.findMany({
+        where: filter,
         limit: query.limit,
         offset: query.offset,
-        filter:
-          query.account_id == null ? [] : [`accountId = "${query.account_id}"`],
       });
-      if (resolved instanceof Note || resolved instanceof Article) {
-        const resolvedPost = await persistPost(db, search, resolved, options);
+      if (
+        hits != null &&
+        (resolved instanceof Note || resolved instanceof Article)
+      ) {
+        const resolvedPost = await persistPost(db, resolved, options);
         if (resolvedPost != null) hits.push(resolvedPost);
       }
       const result =
-        hits.length < 1
+        hits == null || hits.length < 1
           ? []
           : await db.query.posts.findMany({
               where: inArray(
