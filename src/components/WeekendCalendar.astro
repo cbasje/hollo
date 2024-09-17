@@ -31,9 +31,8 @@ const weekend = await sessions.getWeekend(weekOffset);
         const weekDay = weekend.find((w) => w.weekDay === (index + 1) % 7); // Sunday is 0
 
         return weekDay?.sessions.map((session) => (
-            <button
-                is="navigate-button"
-                data-link={`/session/${session.id}`}
+            <a
+                href={`/session/${session.id}`}
                 id={`session-${session.id}`}
                 style={`--color-hue: var(--${session.series}-hue)`}
             >
@@ -68,7 +67,7 @@ const weekend = await sessions.getWeekend(weekOffset);
                         </time>
                     )}
                 </hgroup>
-            </button>
+            </a>
         ));
     })
 }
@@ -83,21 +82,3 @@ const weekend = await sessions.getWeekend(weekOffset);
         <span>Next</span>
     </a>
 </div>
-
-<script>
-    import { navigate } from "astro:transitions/client";
-
-    class NavigateButton extends HTMLButtonElement {
-        constructor() {
-            super();
-
-            this.addEventListener("click", () => {
-                if (this.dataset["link"]) navigate(this.dataset["link"]);
-            });
-        }
-    }
-
-    customElements.define("navigate-button", NavigateButton, {
-        extends: "button",
-    });
-</script>

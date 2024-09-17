@@ -21,7 +21,7 @@ if (!session) throw new Error("Session not found");
     {
         session && (
             <>
-                <button is="back-button">
+                <a href="/">
                     <Icon
                         name={`fluent-emoji-high-contrast:${getSeriesIcon(session.series)}`}
                     />
@@ -53,24 +53,8 @@ if (!session) throw new Error("Session not found");
                             </time>
                         )}
                     </hgroup>
-                </button>
+                </a>
             </>
         )
     }
 </BaseLayout>
-
-<script>
-    class BackButton extends HTMLButtonElement {
-        constructor() {
-            super();
-
-            this.addEventListener("click", () => {
-                history.back();
-            });
-        }
-    }
-
-    customElements.define("back-button", BackButton, {
-        extends: "button",
-    });
-</script>
