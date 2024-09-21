@@ -1,4 +1,6 @@
 import type { SeriesId } from "../../hunter/schema";
+import { getCircuitTitle } from "../circuits/utils";
+import type { RoundExtended } from "./repository";
 
 export const icons: Record<SeriesId, string> = {
   F1: "dashing-away",
@@ -87,4 +89,11 @@ export const getSeriesSecondaryColor = (s: SeriesId) => {
     F1A: "#EF099F",
   };
   return (s && colors[s]) ?? "#000";
+};
+
+export const getRoundTitle = (round: RoundExtended) => {
+  return `${getSeriesTitleShort(round.series)} ${
+    getCircuitTitle(round.series, round.title, round.country, round.locality) ??
+    round.title
+  }${round.isTest ? " Test" : ""}`;
 };

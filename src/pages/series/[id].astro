@@ -1,0 +1,68 @@
+---
+import { parseDate } from "@internationalized/date";
+import { Icon } from "astro-icon/components";
+import * as rounds from "../../db/rounds/repository";
+import { getRoundTitle, getSeriesIcon, getSeriesTitle } from "../../db/rounds/utils";
+import { getSessionTitle } from "../../db/sessions/utils";
+import { seriesIds, type SeriesId } from "../../hunter/schema";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { formatDate } from "../../utils/date";
+
+const { id } = Astro.params as { id: SeriesId | undefined };
+
+if (!id || !(id in seriesIds)) throw new Error("Series not found");
+
+const seriesRounds = await rounds.getAllBySeries(id);
+if (!seriesRounds) throw new Error("Rounds not found");
+---
+
+<BaseLayout
+    title={getSeriesTitle(id)}
+>
+  <a href="/">
+      <Icon
+          name={`fluent-emoji-high-contrast:${getSeriesIcon(id)}`}
+      />
+
+      <h2>
+          {getSeriesTitle(id)}
+      </h2>
+  </a>
+
+  {
+    seriesRounds.map(round=> (
+      <a href="/">
+          <Icon
+            name={`fluent-emoji-high-contrast:${getSeriesIcon(round.series)}`}
+          />
+
+          <hgroup class="round-title">
+            <h2 transition:name={`round-${round.id}`}>
+              {getRoundTitle(round)}
+            </h2>
+
+            <p>
+              {round.circuitTitle}
+            </p>
+
+            {round.start && round.end && (
+              <time datetime={round.start}>
+                  {formatDate(
+                      parseDate(round.start),
+                      parseDate(round.end)
+                  )}
+              </time>
+            )}
+          </hgroup>
+
+          <ol>
+            {round.sessions.map(s=>
+              <li transition:name={`session-${s.id}`}>
+                {getSessionTitle(round.series, s.type, s.number)}
+              </li>
+            )}
+          </ol>
+      </a>
+    ))
+  }
+</BaseLayout>
