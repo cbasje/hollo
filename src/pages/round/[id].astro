@@ -1,0 +1,67 @@
+---
+import { parseDate } from "@internationalized/date";
+import { Icon } from "astro-icon/components";
+import { getCircuitTitle } from "../../db/circuits/utils";
+import * as rounds from "../../db/rounds/repository";
+import { getSeriesIcon, getSeriesTitleShort } from "../../db/rounds/utils";
+import { getSessionTitle } from "../../db/sessions/utils";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { formatDate } from "../../utils/date";
+
+const { id } = Astro.params;
+
+if (!id) throw new Error("Session not found");
+
+const round = await rounds.getOne(id);
+if (!round) throw new Error("Round not found");
+
+const getRoundTitle = () => {
+  return `${getSeriesTitleShort(round.series)} ${
+    getCircuitTitle(round.series, round.title, round.country, round.locality) ??
+    round.title
+  }${round.isTest ? " Test" : ""}`;
+};
+---
+
+<BaseLayout
+title={round.title}
+>
+    {
+        round && (
+            <>
+                <a href="/">
+                    <Icon
+                      name={`fluent-emoji-high-contrast:${getSeriesIcon(round.series)}`}
+                    />
+
+                    <hgroup class="round-title">
+                      <h2 transition:name={`round-${round.id}`}>
+                        {getRoundTitle()}
+                      </h2>
+
+                      <p>
+                        {round.circuitTitle}
+                      </p>
+
+                      {round.start && round.end && (
+                        <time datetime={round.start}>
+                            {formatDate(
+                                parseDate(round.start),
+                                parseDate(round.end)
+                            )}
+                        </time>
+                      )}
+                    </hgroup>
+
+                    <ol>
+                      {round.sessions.map(s=>
+                        <li transition:name={`session-${s.id}`}>
+                          {getSessionTitle(round.series, s.type, s.number)}
+                        </li>
+                      )}
+                    </ol>
+                </a>
+            </>
+        )
+    }
+</BaseLayout>
