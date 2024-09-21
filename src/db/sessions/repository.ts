@@ -3,11 +3,11 @@ import { union } from "drizzle-orm/pg-core";
 import { concat } from "drizzle-orm/pg-core/expressions";
 import db from "..";
 import {
+  type SessionType,
+  type WeekendSession,
   circuits,
   rounds,
   sessions,
-  type SessionType,
-  type WeekendSession,
 } from "../../hunter/schema";
 import { getWeekendDatesFromOffset } from "../../utils/date";
 
@@ -84,6 +84,7 @@ export const getWeekend = async (weekendOffset = 0) => {
       db
         .select({
           id: concat(rounds.id, "-R-r0").as("id"),
+          roundId: sql<string>`${rounds.id}`.as("roundId"),
           type: sql<SessionType | null>`'R'`.as("type"),
           number: sql<number>`0`.as("number"),
           start: sql<string>`TO_CHAR(${rounds.start}, 'YYYY-MM-DD')`.as(
@@ -127,6 +128,7 @@ export const getWeekend = async (weekendOffset = 0) => {
       db
         .select({
           id: sessions.id,
+          roundId: sql<string>`${rounds.id}`.as("roundId"),
           type: sessions.type,
           number: sessions.number,
           start:
@@ -160,7 +162,7 @@ export const getWeekend = async (weekendOffset = 0) => {
           lon: circuits.lon,
         })
         .from(sessions)
-        .leftJoin(rounds, eq(sessions.roundId, rounds.id))
+        .innerJoin(rounds, eq(sessions.roundId, rounds.id))
         .leftJoin(circuits, eq(rounds.circuitId, circuits.id))
         .where(
           and(
@@ -177,7 +179,7 @@ export const getWeekend = async (weekendOffset = 0) => {
       weekDay: sq.weekDay,
       weekNumber: min(sq.weekNumber),
       year: min(sq.year),
-      sessions: sql<WeekendSession[]>`jsonb_agg(${sq}.*)`,
+      sessions: sql<WeekendSession[]>`jsonb_agg(${sq}.* ORDER BY ${sq.start})`,
     })
     .from(sq)
     .groupBy(sq.weekDay);

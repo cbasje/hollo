@@ -16,42 +16,46 @@ if (!round) throw new Error("Round not found");
 ---
 
 <BaseLayout
-title={round.title}
+  title={round.title}
 >
-    {
-        round && (
-          <a href="/">
-              <Icon
-                name={`fluent-emoji-high-contrast:${getSeriesIcon(round.series)}`}
-              />
+  <a href="/">Back</a>
 
-              <hgroup class="round-title">
-                <h2 transition:name={`round-${round.id}`}>
-                  {getRoundTitle(round)}
-                </h2>
+  {
+    round && (
+      <>
+          <Icon
+            name={`fluent-emoji-high-contrast:${getSeriesIcon(round.series)}`}
+          />
 
-                <p>
-                  {round.circuitTitle}
-                </p>
+          <hgroup class="round-title">
+            <h2 transition:name={`round-${round.id}`}>
+              {getRoundTitle(round)}
+            </h2>
 
-                {round.start && round.end && (
-                  <time datetime={round.start}>
-                      {formatDate(
-                          parseDate(round.start),
-                          parseDate(round.end)
-                      )}
-                  </time>
-                )}
-              </hgroup>
+            <p>
+              {round.circuitTitle}
+            </p>
 
-              <ol>
-                {round.sessions.map(s=>
-                  <li transition:name={`session-${s.id}`}>
-                    {getSessionTitle(round.series, s.type, s.number)}
-                  </li>
-                )}
-              </ol>
-          </a>
-        )
-    }
+            {round.start && round.end && (
+              <time datetime={round.start}>
+                  {formatDate(
+                      parseDate(round.start),
+                      parseDate(round.end)
+                  )}
+              </time>
+            )}
+          </hgroup>
+
+          <ol>
+            {round.sessions.map(s=>
+              <li transition:name={`session-${s.id}`}>
+                <a href={`/session/${s.id}`}>
+                  {getSessionTitle(round.series, s.type, s.number)}
+                </a>
+              </li>
+            )}
+          </ol>
+        </>
+    )
+  }
 </BaseLayout>

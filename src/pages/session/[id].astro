@@ -18,43 +18,43 @@ if (!session) throw new Error("Session not found");
 <BaseLayout
     title={getSessionTitle(session.series, session.type, session.number)}
 >
-    {
-        session && (
-            <>
-                <a href="/">
-                    <Icon
-                        name={`fluent-emoji-high-contrast:${getSeriesIcon(session.series)}`}
-                    />
+  <a href="/">Back</a>
 
-                    <hgroup class="round-title">
-                        <h2 transition:name={`session-${session.id}`}>
-                            {session.series}
+  {
+    session && (
+      <>
+        <Icon
+            name={`fluent-emoji-high-contrast:${getSeriesIcon(session.series)}`}
+        />
 
-                            {getSessionTitle(
-                                session.series,
-                                session.type,
-                                session.number
-                            )}
-                        </h2>
+        <hgroup class="round-title">
+            <h2 transition:name={`session-${session.id}`}>
+                {session.series}
 
-                        {session.allDay ? (
-                            <time datetime={session.start}>
-                                {formatDate(
-                                    parseDate(session.start),
-                                    parseDate(session.end)
-                                )}
-                            </time>
-                        ) : (
-                            <time datetime={session.start}>
-                                {formatFixedTime(
-                                    parseAbsolute(session.start, "UTC"),
-                                    parseAbsolute(session.end, "UTC")
-                                )}
-                            </time>
-                        )}
-                    </hgroup>
-                </a>
-            </>
-        )
-    }
+                {getSessionTitle(
+                    session.series,
+                    session.type,
+                    session.number
+                )}
+            </h2>
+
+            {session.allDay ? (
+                <time datetime={session.start}>
+                    {formatDate(
+                        parseDate(session.start),
+                        parseDate(session.end)
+                    )}
+                </time>
+            ) : (
+                <time datetime={session.start}>
+                    {formatFixedTime(
+                        parseAbsolute(session.start, "UTC"),
+                        parseAbsolute(session.end, "UTC")
+                    )}
+                </time>
+            )}
+        </hgroup>
+      </>
+    )
+  }
 </BaseLayout>

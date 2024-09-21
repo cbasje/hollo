@@ -1,45 +1,21 @@
-import { eq, inArray, sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import db from "..";
 import {
-  type Circuit,
-  type Round,
   type SeriesId,
   type Session,
+  type WeekendRound,
   circuits,
   rounds,
   sessions,
 } from "../../hunter/schema";
 
-export type RoundExtended = {
-  id: Round["id"];
-  number: Round["number"];
-  title: Round["title"];
-  season: Round["season"];
-  link: Round["link"];
-  start: Round["start"];
-  end: Round["end"];
-  year: number;
-  weekNumber: number;
-  weekendOffset: number;
-  circuitId: Round["circuitId"];
-  series: Round["series"];
-  country: Circuit["country"] | null;
-  locality: Circuit["locality"] | null;
-  circuitTitle: Circuit["title"] | null;
-  timezone: Circuit["timezone"] | null;
-  sessions: Session[];
-  isTest: boolean;
-};
-
 const sessionSq = db.$with("children").as(
   db
     .select({
       roundId: sessions.roundId,
-      sessions: sql<Session[]>`jsonb_agg(jsonb_build_object(
-        'id', ${sessions.id},
-        'number', ${sessions.number},
-        'type', ${sessions.type}
-      ))`.as("sessions"),
+      sessions: sql<
+        Session[]
+      >`jsonb_agg(${sessions}.* ORDER BY ${sessions.start})`.as("sessions"),
     })
     .from(sessions)
     .groupBy(sessions.roundId),
@@ -62,14 +38,14 @@ const fields = {
   locality: circuits.locality,
   circuitTitle: circuits.title,
   timezone: circuits.timezone,
-  sessions: sessionSq.sessions,
+  sessions: sql<Session[]>`COALESCE(${sessionSq.sessions}, '[]'::jsonb)`,
   isTest: sql<boolean>`${rounds.id} IN ${db
     .selectDistinct({ roundId: sessions.roundId })
     .from(sessions)
     .where(eq(sessions.type, "T"))}`,
-} satisfies Record<keyof RoundExtended, unknown>;
+} satisfies Record<keyof WeekendRound, unknown>;
 
-export const getOne = async (id: string): Promise<RoundExtended> => {
+export const getOne = async (id: string): Promise<WeekendRound> => {
   const [first] = await db
     .with(sessionSq)
     .select(fields)
@@ -81,15 +57,14 @@ export const getOne = async (id: string): Promise<RoundExtended> => {
   return first;
 };
 
-export const getAllBySeries = async (
-  id: SeriesId,
-): Promise<RoundExtended[]> => {
+export const getAllBySeries = async (id: SeriesId): Promise<WeekendRound[]> => {
   const result = await db
     .with(sessionSq)
     .select(fields)
     .from(rounds)
     .leftJoin(sessionSq, eq(sessionSq.roundId, rounds.id))
     .leftJoin(circuits, eq(rounds.circuitId, circuits.id))
-    .where(eq(rounds.series, id));
+    .where(eq(rounds.series, id))
+    .orderBy(rounds.start);
   return result;
 };

@@ -32,7 +32,7 @@ const weekend = await sessions.getWeekend(weekOffset);
 
         return weekDay?.sessions.map((session) => (
             <a
-                href={`/session/${session.id}`}
+                href={`/round/${session.roundId}`}
                 id={`session-${session.id}`}
                 style={`--color-hue: var(--${session.series}-hue)`}
             >
